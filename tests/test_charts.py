@@ -74,12 +74,12 @@ def test_plot_monte_carlo_paths_returns_figure():
     plt.close(figure)
 
 
-def test_plot_monte_carlo_paths_only_labels_median_scenario():
+def test_plot_monte_carlo_paths_uses_compact_summary_legend():
     """Avoid a large legend entry for every Monte Carlo simulation path."""
     simulations = pd.DataFrame(
         {
             f"Simulation {number}": [1000, 1000 + number, 1010 + number]
-            for number in range(1, 51)
+            for number in range(1, 101)
         }
     )
 
@@ -87,5 +87,24 @@ def test_plot_monte_carlo_paths_only_labels_median_scenario():
     legend = figure.axes[0].get_legend()
     labels = [text.get_text() for text in legend.get_texts()]
 
-    assert labels == ["Median scenario"]
+    assert labels == [
+        "5th–95th percentile range",
+        "Median simulated path",
+    ]
+    plt.close(figure)
+
+
+def test_plot_monte_carlo_paths_limits_background_lines_to_10():
+    """Keep the Monte Carlo chart compact even with many simulations."""
+    simulations = pd.DataFrame(
+        {
+            f"Simulation {number}": [1000, 1000 + number, 1010 + number]
+            for number in range(1, 101)
+        }
+    )
+
+    figure = plot_monte_carlo_paths(simulations)
+    plotted_lines = figure.axes[0].lines
+
+    assert len(plotted_lines) == 11
     plt.close(figure)

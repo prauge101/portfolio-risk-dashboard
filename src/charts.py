@@ -119,35 +119,55 @@ def plot_correlation_matrix(returns_df):
 def plot_monte_carlo_paths(simulation_df):
     """Plot Monte Carlo simulation paths for illustrative portfolio scenarios.
 
-    Each light line is one simulated scenario path. The dark line shows the
-    median scenario, so the chart should be read as a range of possible
-    outcomes rather than a forecast.
+    The light lines show a small sample of scenarios. The dark line shows the
+    median scenario, and the shaded band shows the 5th to 95th percentile range.
+    The chart should be read as uncertainty analysis, not a forecast.
     """
     figure, axis = plt.subplots(figsize=(9, 4.6))
     figure.patch.set_facecolor("white")
     axis.set_facecolor("white")
-    paths_to_plot = simulation_df.iloc[:, :100]
-    axis.plot(
-        paths_to_plot.index,
-        paths_to_plot.to_numpy(),
-        color="#2563eb",
-        linewidth=0.8,
-        alpha=0.18,
-        label="_nolegend_",
-    )
+    paths_to_plot = simulation_df.iloc[:, :10]
+    trading_days = simulation_df.index
+    percentile_5 = simulation_df.quantile(0.05, axis=1)
     median_path = simulation_df.median(axis=1)
-    axis.plot(
-        median_path.index,
+    percentile_95 = simulation_df.quantile(0.95, axis=1)
+
+    percentile_band = axis.fill_between(
+        trading_days,
+        percentile_5.to_numpy(),
+        percentile_95.to_numpy(),
+        color="#2563eb",
+        alpha=0.12,
+        label="5th–95th percentile range",
+    )
+
+    for column in paths_to_plot.columns:
+        axis.plot(
+            trading_days,
+            paths_to_plot[column].to_numpy(),
+            color="#2563eb",
+            linewidth=0.7,
+            alpha=0.10,
+            label="_nolegend_",
+        )
+
+    median_line = axis.plot(
+        trading_days,
         median_path.to_numpy(),
         color="#111827",
-        label="Median scenario",
+        label="Median simulated path",
         linewidth=2.2,
-    )
-    axis.set_title("Monte Carlo Simulation: Illustrative Portfolio Paths")
-    axis.set_xlabel("Future day")
+    )[0]
+
+    axis.set_title("Monte Carlo risk simulation")
+    axis.set_xlabel("Simulated trading days")
     axis.set_ylabel("Portfolio value")
     axis.yaxis.set_major_formatter(StrMethodFormatter("${x:,.0f}"))
-    axis.legend(frameon=False)
+    axis.legend(
+        handles=[percentile_band, median_line],
+        labels=["5th–95th percentile range", "Median simulated path"],
+        frameon=False,
+    )
     _apply_clean_axis_style(axis)
     figure.tight_layout()
 

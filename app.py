@@ -487,29 +487,7 @@ show_monte_carlo = st.sidebar.checkbox(
     value=True,
     help="Turn this off if you only want historical portfolio risk metrics.",
 )
-if show_monte_carlo:
-    num_simulations = st.sidebar.number_input(
-        "Simulation paths",
-        min_value=100,
-        max_value=5000,
-        value=1000,
-        step=100,
-    )
-    num_days = st.sidebar.number_input(
-        "Future days",
-        min_value=1,
-        max_value=1000,
-        value=252,
-        step=21,
-    )
-    initial_value = st.sidebar.number_input(
-        "Initial portfolio value",
-        min_value=100.0,
-        value=10000.0,
-        step=500.0,
-        format="%.2f",
-    )
-else:
+if not show_monte_carlo:
     st.sidebar.caption("Monte Carlo simulation is disabled.")
 
 st.subheader("Dataset Overview")
@@ -609,13 +587,6 @@ with portfolio_tab:
             portfolio_returns
         )
         historical_var = calculate_historical_var(portfolio_returns)
-        if show_monte_carlo:
-            simulation_paths = run_monte_carlo_simulation(
-                portfolio_returns,
-                num_simulations=int(num_simulations),
-                num_days=int(num_days),
-                initial_value=float(initial_value),
-            )
     except ValueError as error:
         st.error(str(error))
     else:
@@ -669,18 +640,50 @@ with portfolio_tab:
                 clear_figure=True,
             )
 
-        if show_monte_carlo:
-            with st.container(border=True):
-                st.subheader("Monte Carlo Simulation")
+        with st.expander("Monte Carlo risk simulation", expanded=False):
+            if show_monte_carlo:
                 st.markdown(
-                    '<p class="section-note">The simulation uses historical average '
-                    "return and volatility to generate illustrative scenarios. It "
-                    "is not a market forecast.</p>",
+                    '<p class="section-note">This simulation uses historical mean '
+                    "return and volatility to generate possible future paths. It "
+                    "is a simplified uncertainty model, not a prediction of future "
+                    "prices.</p>",
                     unsafe_allow_html=True,
                 )
+
+                control_col1, control_col2, control_col3 = st.columns(3)
+                with control_col1:
+                    num_simulations = st.number_input(
+                        "Number of simulations",
+                        min_value=100,
+                        max_value=2000,
+                        value=500,
+                        step=100,
+                    )
+                with control_col2:
+                    num_days = st.selectbox(
+                        "Simulation horizon",
+                        [30, 90, 252, 1260],
+                        index=2,
+                        format_func=lambda days: f"{days} trading days",
+                    )
+                with control_col3:
+                    initial_value = st.number_input(
+                        "Initial portfolio value",
+                        min_value=100.0,
+                        value=10000.0,
+                        step=500.0,
+                        format="%.2f",
+                    )
+
+                simulation_paths = run_monte_carlo_simulation(
+                    portfolio_returns,
+                    num_simulations=int(num_simulations),
+                    num_days=int(num_days),
+                    initial_value=float(initial_value),
+                )
                 st.pyplot(plot_monte_carlo_paths(simulation_paths), clear_figure=True)
-        else:
-            st.info("Monte Carlo simulation is disabled in the sidebar.")
+            else:
+                st.info("Monte Carlo simulation is disabled in the sidebar.")
 
         with st.expander("Assumptions and limitations"):
             st.write(
