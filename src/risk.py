@@ -24,6 +24,40 @@ def calculate_historical_var(
     return float(historical_var)
 
 
+def calculate_stress_test_loss(
+    weights: dict,
+    shocks: dict,
+    portfolio_value: float = 10000,
+) -> dict:
+    """Calculate portfolio impact from hypothetical ticker-level shocks.
+
+    Stress testing applies assumed market shocks to each holding to estimate how
+    the total portfolio would respond. It is a scenario analysis tool, not a
+    prediction of what markets will do.
+    """
+    if portfolio_value <= 0:
+        raise ValueError("portfolio_value must be greater than 0")
+    if not weights:
+        raise ValueError("weights must not be empty")
+
+    missing_shocks = [ticker for ticker in weights if ticker not in shocks]
+    if missing_shocks:
+        missing = ", ".join(missing_shocks)
+        raise ValueError(f"Missing shock(s) for ticker(s): {missing}")
+
+    portfolio_impact_percent = sum(
+        weights[ticker] * shocks[ticker] for ticker in weights
+    )
+    portfolio_impact_value = portfolio_value * portfolio_impact_percent
+    stressed_portfolio_value = portfolio_value + portfolio_impact_value
+
+    return {
+        "portfolio_impact_percent": portfolio_impact_percent,
+        "portfolio_impact_value": portfolio_impact_value,
+        "stressed_portfolio_value": stressed_portfolio_value,
+    }
+
+
 def run_monte_carlo_simulation(
     portfolio_returns: pd.Series,
     num_simulations: int = 1000,

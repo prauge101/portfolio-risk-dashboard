@@ -10,7 +10,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from pandas.testing import assert_frame_equal
 
-from src.risk import calculate_historical_var, run_monte_carlo_simulation
+from src.risk import (
+    calculate_historical_var,
+    calculate_stress_test_loss,
+    run_monte_carlo_simulation,
+)
 
 
 def test_calculate_historical_var_uses_lower_tail_percentile():
@@ -46,6 +50,36 @@ def test_calculate_historical_var_raises_value_error_for_invalid_confidence():
 
     with pytest.raises(ValueError, match="confidence_level must be between 0 and 1"):
         calculate_historical_var(portfolio_returns, confidence_level=1.00)
+
+
+def test_calculate_stress_test_loss_from_simple_weighted_shock():
+    """Calculate known weighted stress impact and stressed portfolio value."""
+    weights = {"ALPHA": 0.60, "BETA": 0.40}
+    shocks = {"ALPHA": -0.10, "BETA": -0.20}
+
+    result = calculate_stress_test_loss(weights, shocks, portfolio_value=10000)
+
+    assert result["portfolio_impact_percent"] == pytest.approx(-0.14)
+    assert result["portfolio_impact_value"] == pytest.approx(-1400.0)
+    assert result["stressed_portfolio_value"] == pytest.approx(8600.0)
+
+
+def test_calculate_stress_test_loss_raises_value_error_for_missing_shock():
+    """Raise a clear error when any ticker is missing a shock assumption."""
+    weights = {"ALPHA": 0.60, "BETA": 0.40}
+    shocks = {"ALPHA": -0.10}
+
+    with pytest.raises(ValueError, match="Missing shock\\(s\\) for ticker\\(s\\): BETA"):
+        calculate_stress_test_loss(weights, shocks)
+
+
+def test_calculate_stress_test_loss_raises_value_error_for_invalid_value():
+    """Raise a clear error when the portfolio value is not positive."""
+    weights = {"ALPHA": 1.00}
+    shocks = {"ALPHA": -0.10}
+
+    with pytest.raises(ValueError, match="portfolio_value must be greater than 0"):
+        calculate_stress_test_loss(weights, shocks, portfolio_value=0)
 
 
 def test_run_monte_carlo_simulation_returns_expected_shape():
