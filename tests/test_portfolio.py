@@ -1,6 +1,82 @@
 """Tests for portfolio weighting and aggregation calculations."""
 
+import sys
+from pathlib import Path
 
-def test_portfolio_placeholder():
-    """Confirm the portfolio test file is ready for future calculation tests."""
-    assert True
+import pandas as pd
+import pytest
+from pandas.testing import assert_series_equal
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from src.portfolio import (
+    calculate_portfolio_cumulative_returns,
+    calculate_portfolio_returns,
+    validate_weights,
+)
+
+
+def test_validate_weights_accepts_complete_weights_that_sum_to_one():
+    """Accept weights when every ticker is included and the total is 100%."""
+    weights = {"ALPHA": 0.60, "BETA": 0.40}
+
+    result = validate_weights(weights, ["ALPHA", "BETA"])
+
+    assert result is None
+
+
+def test_validate_weights_raises_value_error_for_missing_weight():
+    """Raise a clear error when a ticker has no portfolio weight."""
+    weights = {"ALPHA": 1.00}
+
+    with pytest.raises(ValueError, match="Missing weight\\(s\\) for ticker\\(s\\): BETA"):
+        validate_weights(weights, ["ALPHA", "BETA"])
+
+
+def test_validate_weights_raises_value_error_when_weights_do_not_sum_to_one():
+    """Raise a clear error when weights do not add up to 100% of the portfolio."""
+    weights = {"ALPHA": 0.60, "BETA": 0.30}
+
+    with pytest.raises(ValueError, match="Portfolio weights must sum to 1"):
+        validate_weights(weights, ["ALPHA", "BETA"])
+
+
+def test_calculate_portfolio_returns_from_simple_weights():
+    """Calculate weighted portfolio returns from simple asset returns."""
+    returns_data = pd.DataFrame(
+        {
+            "ALPHA": [0.10, 0.00],
+            "BETA": [0.00, 0.20],
+        },
+        index=pd.to_datetime(["2026-01-02", "2026-01-03"]),
+    )
+    weights = {"ALPHA": 0.60, "BETA": 0.40}
+
+    result = calculate_portfolio_returns(returns_data, weights)
+
+    expected = pd.Series(
+        [0.06, 0.08],
+        index=pd.to_datetime(["2026-01-02", "2026-01-03"]),
+        name="Portfolio",
+    )
+
+    assert_series_equal(result, expected)
+
+
+def test_calculate_portfolio_cumulative_returns_from_simple_returns():
+    """Compound portfolio returns over time."""
+    portfolio_returns = pd.Series(
+        [0.06, 0.08],
+        index=pd.to_datetime(["2026-01-02", "2026-01-03"]),
+        name="Portfolio",
+    )
+
+    result = calculate_portfolio_cumulative_returns(portfolio_returns)
+
+    expected = pd.Series(
+        [0.06, 0.1448],
+        index=pd.to_datetime(["2026-01-02", "2026-01-03"]),
+        name="Portfolio",
+    )
+
+    assert_series_equal(result, expected)
