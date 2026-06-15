@@ -8,18 +8,18 @@ def calculate_historical_var(
     portfolio_returns: pd.Series,
     confidence_level: float = 0.95,
 ) -> float:
-    """Calculate historical Value at Risk for portfolio returns.
+    """Calculate historical Value at Risk from daily portfolio returns.
 
-    Value at Risk estimates a possible loss threshold using past returns. At
-    95% confidence, historical VaR looks at the worst 5% of returns and reports
-    that loss as a positive number.
+    Value at Risk estimates a loss threshold from past returns. At 95%
+    confidence, this historical method uses the 5th percentile daily return and
+    reports the loss as a positive number.
     """
     if confidence_level <= 0 or confidence_level >= 1:
         raise ValueError("confidence_level must be between 0 and 1")
 
     percentile = (1 - confidence_level) * 100
     var_return = np.percentile(portfolio_returns, percentile)
-    historical_var = -var_return
+    historical_var = max(0.0, -var_return)
 
     return float(historical_var)
 
@@ -31,12 +31,12 @@ def run_monte_carlo_simulation(
     initial_value: float = 10000,
     random_seed: int = 42,
 ) -> pd.DataFrame:
-    """Simulate possible future portfolio values using historical returns.
+    """Generate illustrative portfolio value paths using historical returns.
 
-    A Monte Carlo simulation creates many possible future paths by drawing
+    A Monte Carlo simulation creates many scenario paths by drawing
     random daily returns. This simple version uses the portfolio's historical
-    average return and volatility to estimate what future daily returns might
-    look like.
+    average return and volatility, so it is a risk illustration rather than a
+    market forecast.
     """
     if portfolio_returns.empty:
         raise ValueError("portfolio_returns must not be empty")

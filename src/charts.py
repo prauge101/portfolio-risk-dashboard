@@ -86,7 +86,7 @@ def plot_correlation_matrix(returns_df):
     figure, axis = plt.subplots(figsize=(6.7, 5.6))
     figure.patch.set_facecolor("white")
     axis.set_facecolor("white")
-    image = axis.imshow(correlation_matrix, cmap="Blues", vmin=-1, vmax=1)
+    image = axis.imshow(correlation_matrix, cmap="coolwarm", vmin=-1, vmax=1)
     axis.set_title("Asset Return Correlations")
     axis.set_xticks(range(len(correlation_matrix.columns)))
     axis.set_yticks(range(len(correlation_matrix.index)))
@@ -117,10 +117,11 @@ def plot_correlation_matrix(returns_df):
 
 
 def plot_monte_carlo_paths(simulation_df):
-    """Plot Monte Carlo simulation paths for possible future portfolio values.
+    """Plot Monte Carlo simulation paths for illustrative portfolio scenarios.
 
-    Each line is one simulated future path. The chart shows a range of possible
-    outcomes rather than a single forecast.
+    Each light line is one simulated scenario path. The dark line shows the
+    median scenario, so the chart should be read as a range of possible
+    outcomes rather than a forecast.
     """
     figure, axis = plt.subplots(figsize=(9, 4.6))
     figure.patch.set_facecolor("white")
@@ -136,12 +137,14 @@ def plot_monte_carlo_paths(simulation_df):
     simulation_df.median(axis=1).plot(
         ax=axis,
         color="#111827",
+        label="Median scenario",
         linewidth=2.2,
     )
-    axis.set_title("Monte Carlo Simulation: Possible Portfolio Values")
+    axis.set_title("Monte Carlo Simulation: Illustrative Portfolio Paths")
     axis.set_xlabel("Future day")
     axis.set_ylabel("Portfolio value")
     axis.yaxis.set_major_formatter(StrMethodFormatter("${x:,.0f}"))
+    axis.legend(frameon=False)
     _apply_clean_axis_style(axis)
     figure.tight_layout()
 

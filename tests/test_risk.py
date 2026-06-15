@@ -31,6 +31,15 @@ def test_calculate_historical_var_accepts_different_confidence_level():
     assert result == pytest.approx(0.06)
 
 
+def test_calculate_historical_var_does_not_return_negative_loss():
+    """Return zero VaR when the selected percentile is still a gain."""
+    portfolio_returns = pd.Series([0.01, 0.02, 0.03, 0.04, 0.05])
+
+    result = calculate_historical_var(portfolio_returns, confidence_level=0.95)
+
+    assert result == 0.0
+
+
 def test_calculate_historical_var_raises_value_error_for_invalid_confidence():
     """Raise a clear error when confidence level is outside the valid range."""
     portfolio_returns = pd.Series([-0.10, -0.05, 0.00, 0.05, 0.10])

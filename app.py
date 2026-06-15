@@ -316,8 +316,8 @@ with st.container(border=True):
 try:
     if uploaded_file is None:
         st.info(
-            "Demo mode: no CSV uploaded, so the dashboard is using "
-            "`data/sample_prices.csv`. Upload your own file to replace it."
+            "Demo mode: using synthetic sample data from "
+            "`data/sample_prices.csv`. Upload your own CSV to replace it."
         )
         price_data = load_price_data("data/sample_prices.csv")
     else:
@@ -510,16 +510,16 @@ with portfolio_tab:
             )
         with metric_col2:
             metric_card(
-                "Historical VaR",
+                "Historical VaR (95%, 1-day)",
                 format_percent(historical_var),
-                "95% confidence loss estimate",
+                "5th percentile daily portfolio loss",
                 "red",
             )
         with metric_col3:
             metric_card(
                 "Annualised Volatility",
                 format_percent(portfolio_volatility),
-                "Yearly risk estimate",
+                "Annualised from daily returns using 252 trading days",
                 "amber",
             )
         with metric_col4:
@@ -546,8 +546,17 @@ with portfolio_tab:
             st.subheader("Monte Carlo Simulation")
             st.markdown(
                 '<p class="section-note">The simulation uses historical average '
-                "return and volatility to sketch a range of possible future "
-                "portfolio values. It is not a forecast.</p>",
+                "return and volatility to generate illustrative scenarios. It "
+                "is not a market forecast.</p>",
                 unsafe_allow_html=True,
             )
             st.pyplot(plot_monte_carlo_paths(simulation_paths), clear_figure=True)
+
+        with st.expander("Assumptions and limitations"):
+            st.write(
+                "This dashboard is for educational analysis only and is not "
+                "investment advice. Historical VaR is based on daily portfolio "
+                "returns. Monte Carlo paths assume normally distributed returns, "
+                "constant mean and volatility, no transaction costs, and fixed "
+                "portfolio weights over the simulated period."
+            )

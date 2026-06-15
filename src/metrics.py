@@ -42,10 +42,10 @@ def calculate_annualised_volatility(
 
 
 def calculate_drawdown(cumulative_returns_df: pd.DataFrame) -> pd.DataFrame:
-    """Calculate each ticker's percentage fall from its previous peak.
+    """Calculate each return series' percentage fall from its previous peak.
 
-    Drawdown shows how far an investment has dropped from the best value it had
-    reached so far. A drawdown of -0.20 means the investment is 20% below its
+    Drawdown shows how far an asset or portfolio has dropped from the best
+    value it had reached so far. A drawdown of -0.20 means it is 20% below its
     previous peak.
     """
     portfolio_value = 1 + cumulative_returns_df
@@ -56,11 +56,11 @@ def calculate_drawdown(cumulative_returns_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def calculate_max_drawdown(cumulative_returns_df: pd.DataFrame) -> pd.Series:
-    """Calculate the worst drawdown for each ticker.
+    """Calculate the worst drawdown for each return series.
 
     Max drawdown is the largest percentage fall from a previous peak during the
-    period. It helps show the worst loss an investor would have seen before a
-    recovery.
+    period. It helps show the worst peak-to-trough decline an investor would
+    have seen before a recovery.
     """
     drawdown = calculate_drawdown(cumulative_returns_df)
     max_drawdown = drawdown.min()
