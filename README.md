@@ -12,6 +12,7 @@ The app currently supports:
 
 - Loading price data from CSV
 - Using synthetic demo data when no CSV is uploaded
+- Optionally fetching market data with yfinance
 - Calculating daily and cumulative returns
 - Measuring annualised volatility and drawdown
 - Applying portfolio weights
@@ -21,7 +22,13 @@ The app currently supports:
 
 ## Data Format
 
-Upload a CSV with these columns:
+The dashboard supports three data sources:
+
+- Demo data from `data/sample_prices.csv`
+- CSV upload
+- Optional yfinance market data fetch
+
+CSV upload is the most reliable option. Upload a CSV with these columns:
 
 ```text
 Date,Ticker,Close
@@ -29,13 +36,18 @@ Date,Ticker,Close
 
 The included `data/sample_prices.csv` file is synthetic demo data. It is not real investment data.
 
+For yfinance, the app includes preset groups for US mega-cap technology stocks, US banks, UK large caps, global ETFs, and a mixed demo portfolio. You can also edit the ticker list manually. The dashboard limits yfinance requests to a maximum of 8 tickers.
+
+Market data is fetched using yfinance for educational and research purposes. yfinance is not affiliated with, endorsed by, or vetted by Yahoo. Data may be delayed, unavailable, or subject to Yahoo's terms of use. This dashboard does not provide investment advice.
+
 ## Assumptions And Limitations
 
 - This project is for educational analysis only and is not investment advice.
 - Historical VaR is calculated from daily portfolio returns.
 - Monte Carlo paths are illustrative scenarios, not market forecasts.
 - The simulation assumes normally distributed returns, constant mean and volatility, no transaction costs, and fixed portfolio weights.
-- No live stock APIs or advanced finance libraries are used.
+- yfinance data may be delayed, unavailable for some tickers, or affected by Yahoo's terms of use.
+- No advanced finance libraries are used.
 
 ## Project Structure
 

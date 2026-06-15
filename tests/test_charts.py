@@ -72,3 +72,20 @@ def test_plot_monte_carlo_paths_returns_figure():
 
     assert isinstance(figure, Figure)
     plt.close(figure)
+
+
+def test_plot_monte_carlo_paths_only_labels_median_scenario():
+    """Avoid a large legend entry for every Monte Carlo simulation path."""
+    simulations = pd.DataFrame(
+        {
+            f"Simulation {number}": [1000, 1000 + number, 1010 + number]
+            for number in range(1, 51)
+        }
+    )
+
+    figure = plot_monte_carlo_paths(simulations)
+    legend = figure.axes[0].get_legend()
+    labels = [text.get_text() for text in legend.get_texts()]
+
+    assert labels == ["Median scenario"]
+    plt.close(figure)

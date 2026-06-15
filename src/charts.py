@@ -127,15 +127,18 @@ def plot_monte_carlo_paths(simulation_df):
     figure.patch.set_facecolor("white")
     axis.set_facecolor("white")
     paths_to_plot = simulation_df.iloc[:, :100]
-    paths_to_plot.plot(
-        ax=axis,
+    axis.plot(
+        paths_to_plot.index,
+        paths_to_plot.to_numpy(),
         color="#2563eb",
-        legend=False,
         linewidth=0.8,
         alpha=0.18,
+        label="_nolegend_",
     )
-    simulation_df.median(axis=1).plot(
-        ax=axis,
+    median_path = simulation_df.median(axis=1)
+    axis.plot(
+        median_path.index,
+        median_path.to_numpy(),
         color="#111827",
         label="Median scenario",
         linewidth=2.2,

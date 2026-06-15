@@ -10,7 +10,12 @@ from src.charts import (
     plot_drawdowns,
     plot_monte_carlo_paths,
 )
-from src.data_loader import load_price_data
+from src.data_loader import (
+    MAX_YFINANCE_TICKERS,
+    fetch_yfinance_price_data,
+    load_price_data,
+    parse_ticker_list,
+)
 from src.metrics import (
     calculate_annualised_volatility,
     calculate_cumulative_returns,
@@ -24,6 +29,22 @@ from src.portfolio import (
     validate_weights,
 )
 from src.risk import calculate_historical_var, run_monte_carlo_simulation
+
+
+YFINANCE_PRESETS = {
+    "US Mega-Cap Tech": ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA"],
+    "US Banks": ["JPM", "BAC", "GS", "MS", "C"],
+    "UK Large Caps": ["SHEL.L", "BP.L", "HSBA.L", "RR.L", "TSCO.L"],
+    "Global ETFs": ["SPY", "QQQ", "VTI", "EFA", "EEM"],
+    "Mixed Demo Portfolio": ["AAPL", "MSFT", "JPM", "SHEL.L", "RR.L"],
+}
+YFINANCE_PERIODS = ["6mo", "1y", "2y", "5y"]
+YFINANCE_DISCLAIMER = (
+    "Market data is fetched using yfinance for educational and research "
+    "purposes. yfinance is not affiliated with, endorsed by, or vetted by "
+    "Yahoo. Data may be delayed, unavailable, or subject to Yahoo's terms of "
+    "use. This dashboard does not provide investment advice."
+)
 
 
 st.set_page_config(
@@ -54,6 +75,16 @@ def metric_card(label: str, value: str, detail: str = "", tone: str = "blue") ->
         """,
         unsafe_allow_html=True,
     )
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def cached_fetch_yfinance_price_data(
+    tickers: tuple[str, ...],
+    period: str,
+    interval: str,
+):
+    """Fetch yfinance data through Streamlit's cache to reduce repeat calls."""
+    return fetch_yfinance_price_data(list(tickers), period=period, interval=interval)
 
 
 st.markdown(
@@ -299,30 +330,116 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-with st.container(border=True):
-    st.markdown('<div class="panel-title">Data Source</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="panel-note">Upload a CSV with Date, Ticker and Close columns, '
-        "or continue with the built-in demo data.</div>",
-        unsafe_allow_html=True,
-    )
-    uploaded_file = st.file_uploader(
+st.sidebar.title("Portfolio Setup")
+st.sidebar.header("Data Source")
+data_source = st.sidebar.radio(
+    "Choose price data source",
+    ["Demo data", "Upload CSV", "Fetch market data with yfinance"],
+)
+
+uploaded_file = None
+yfinance_tickers = []
+yfinance_period = "2y"
+
+if data_source == "Demo data":
+    st.sidebar.caption("Uses synthetic sample data included in the project.")
+elif data_source == "Upload CSV":
+    st.sidebar.caption("CSV upload is the most reliable option.")
+    uploaded_file = st.sidebar.file_uploader(
         "Upload price data CSV",
         type=["csv"],
         help="CSV must contain Date, Ticker, and Close columns.",
-        label_visibility="collapsed",
+    )
+else:
+    st.sidebar.info(
+        "Market data is fetched using yfinance for educational use. It may be "
+        "delayed or unavailable for some tickers."
+    )
+    preset_name = st.sidebar.selectbox(
+        "Preset ticker group",
+        list(YFINANCE_PRESETS.keys()),
+        index=4,
+    )
+    preset_tickers = ", ".join(YFINANCE_PRESETS[preset_name])
+    ticker_text = st.sidebar.text_area(
+        "Tickers",
+        value=preset_tickers,
+        key=f"yfinance_tickers_{preset_name}",
+        help="Enter ticker symbols separated by commas.",
+    )
+    yfinance_period = st.sidebar.selectbox(
+        "History period",
+        YFINANCE_PERIODS,
+        index=2,
     )
 
+    try:
+        entered_tickers = parse_ticker_list(ticker_text)
+        if len(entered_tickers) > MAX_YFINANCE_TICKERS:
+            st.sidebar.warning(
+                f"Only the first {MAX_YFINANCE_TICKERS} tickers will be used. "
+                f"You entered {len(entered_tickers)}."
+            )
+        yfinance_tickers = entered_tickers[:MAX_YFINANCE_TICKERS]
+    except ValueError as error:
+        st.sidebar.error(str(error))
+
+with st.container(border=True):
+    st.markdown('<div class="panel-title">Data Source</div>', unsafe_allow_html=True)
+    if data_source == "Demo data":
+        st.markdown(
+            '<div class="panel-note">Using synthetic demo data from '
+            "<code>data/sample_prices.csv</code>.</div>",
+            unsafe_allow_html=True,
+        )
+    elif data_source == "Upload CSV":
+        st.markdown(
+            '<div class="panel-note">Upload a CSV with Date, Ticker and Close '
+            "columns. This is the most reliable option.</div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown(
+            '<div class="panel-note">Fetching adjusted daily close prices where '
+            "available using yfinance.</div>",
+            unsafe_allow_html=True,
+        )
+        st.caption(YFINANCE_DISCLAIMER)
+
 try:
-    if uploaded_file is None:
+    if data_source == "Demo data":
         st.info(
             "Demo mode: using synthetic sample data from "
             "`data/sample_prices.csv`. Upload your own CSV to replace it."
         )
         price_data = load_price_data("data/sample_prices.csv")
-    else:
+    elif data_source == "Upload CSV":
+        if uploaded_file is None:
+            st.warning("Upload a CSV file to continue, or select demo data.")
+            st.stop()
         st.success(f"Loaded uploaded file: `{uploaded_file.name}`.")
         price_data = load_price_data(uploaded_file)
+    else:
+        if not yfinance_tickers:
+            st.warning("Enter at least one ticker to fetch market data.")
+            st.stop()
+        with st.spinner("Fetching market data with yfinance..."):
+            price_data = cached_fetch_yfinance_price_data(
+                tuple(yfinance_tickers),
+                yfinance_period,
+                "1d",
+            )
+        returned_tickers = set(price_data["Ticker"].unique())
+        missing_tickers = [
+            ticker for ticker in yfinance_tickers if ticker not in returned_tickers
+        ]
+        if missing_tickers:
+            missing = ", ".join(missing_tickers)
+            st.warning(f"No usable price data was returned for: {missing}")
+        st.success(
+            "Loaded yfinance market data for: "
+            f"{', '.join(sorted(returned_tickers))}"
+        )
 except ValueError as error:
     st.error(str(error))
     st.stop()
@@ -341,7 +458,8 @@ if daily_returns.empty:
 tickers = list(daily_returns.columns)
 equal_weight = 1 / len(tickers)
 
-st.sidebar.title("Portfolio Setup")
+st.sidebar.divider()
+st.sidebar.header("Portfolio Weights")
 st.sidebar.caption("Set weights as decimals. The default is an equal-weight portfolio.")
 
 weights = {}
@@ -364,27 +482,35 @@ with st.sidebar.expander("Asset weights", expanded=True):
 
 st.sidebar.divider()
 st.sidebar.subheader("Monte Carlo Settings")
-num_simulations = st.sidebar.number_input(
-    "Simulation paths",
-    min_value=100,
-    max_value=5000,
-    value=1000,
-    step=100,
+show_monte_carlo = st.sidebar.checkbox(
+    "Show Monte Carlo simulation",
+    value=True,
+    help="Turn this off if you only want historical portfolio risk metrics.",
 )
-num_days = st.sidebar.number_input(
-    "Future days",
-    min_value=1,
-    max_value=1000,
-    value=252,
-    step=21,
-)
-initial_value = st.sidebar.number_input(
-    "Initial portfolio value",
-    min_value=100.0,
-    value=10000.0,
-    step=500.0,
-    format="%.2f",
-)
+if show_monte_carlo:
+    num_simulations = st.sidebar.number_input(
+        "Simulation paths",
+        min_value=100,
+        max_value=5000,
+        value=1000,
+        step=100,
+    )
+    num_days = st.sidebar.number_input(
+        "Future days",
+        min_value=1,
+        max_value=1000,
+        value=252,
+        step=21,
+    )
+    initial_value = st.sidebar.number_input(
+        "Initial portfolio value",
+        min_value=100.0,
+        value=10000.0,
+        step=500.0,
+        format="%.2f",
+    )
+else:
+    st.sidebar.caption("Monte Carlo simulation is disabled.")
 
 st.subheader("Dataset Overview")
 data_col1, data_col2, data_col3, data_col4, data_col5 = st.columns(5)
@@ -483,12 +609,13 @@ with portfolio_tab:
             portfolio_returns
         )
         historical_var = calculate_historical_var(portfolio_returns)
-        simulation_paths = run_monte_carlo_simulation(
-            portfolio_returns,
-            num_simulations=int(num_simulations),
-            num_days=int(num_days),
-            initial_value=float(initial_value),
-        )
+        if show_monte_carlo:
+            simulation_paths = run_monte_carlo_simulation(
+                portfolio_returns,
+                num_simulations=int(num_simulations),
+                num_days=int(num_days),
+                initial_value=float(initial_value),
+            )
     except ValueError as error:
         st.error(str(error))
     else:
@@ -542,15 +669,18 @@ with portfolio_tab:
                 clear_figure=True,
             )
 
-        with st.container(border=True):
-            st.subheader("Monte Carlo Simulation")
-            st.markdown(
-                '<p class="section-note">The simulation uses historical average '
-                "return and volatility to generate illustrative scenarios. It "
-                "is not a market forecast.</p>",
-                unsafe_allow_html=True,
-            )
-            st.pyplot(plot_monte_carlo_paths(simulation_paths), clear_figure=True)
+        if show_monte_carlo:
+            with st.container(border=True):
+                st.subheader("Monte Carlo Simulation")
+                st.markdown(
+                    '<p class="section-note">The simulation uses historical average '
+                    "return and volatility to generate illustrative scenarios. It "
+                    "is not a market forecast.</p>",
+                    unsafe_allow_html=True,
+                )
+                st.pyplot(plot_monte_carlo_paths(simulation_paths), clear_figure=True)
+        else:
+            st.info("Monte Carlo simulation is disabled in the sidebar.")
 
         with st.expander("Assumptions and limitations"):
             st.write(
