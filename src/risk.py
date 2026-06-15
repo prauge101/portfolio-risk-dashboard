@@ -22,3 +22,45 @@ def calculate_historical_var(
     historical_var = -var_return
 
     return float(historical_var)
+
+
+def run_monte_carlo_simulation(
+    portfolio_returns: pd.Series,
+    num_simulations: int = 1000,
+    num_days: int = 252,
+    initial_value: float = 10000,
+    random_seed: int = 42,
+) -> pd.DataFrame:
+    """Simulate possible future portfolio values using historical returns.
+
+    A Monte Carlo simulation creates many possible future paths by drawing
+    random daily returns. This simple version uses the portfolio's historical
+    average return and volatility to estimate what future daily returns might
+    look like.
+    """
+    if portfolio_returns.empty:
+        raise ValueError("portfolio_returns must not be empty")
+    if num_simulations <= 0:
+        raise ValueError("num_simulations must be greater than 0")
+    if num_days <= 0:
+        raise ValueError("num_days must be greater than 0")
+    if initial_value <= 0:
+        raise ValueError("initial_value must be greater than 0")
+
+    mean_return = portfolio_returns.mean()
+    return_volatility = portfolio_returns.std()
+
+    random_generator = np.random.default_rng(random_seed)
+    simulated_returns = random_generator.normal(
+        loc=mean_return,
+        scale=return_volatility,
+        size=(num_days, num_simulations),
+    )
+
+    starting_values = np.full((1, num_simulations), initial_value)
+    simulated_values = initial_value * (1 + simulated_returns).cumprod(axis=0)
+    simulation_paths = np.vstack([starting_values, simulated_values])
+
+    columns = [f"Simulation {number}" for number in range(1, num_simulations + 1)]
+
+    return pd.DataFrame(simulation_paths, columns=columns)
