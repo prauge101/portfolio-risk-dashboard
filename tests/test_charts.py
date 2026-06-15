@@ -1,0 +1,74 @@
+"""Tests for matplotlib chart helper functions."""
+
+import sys
+from pathlib import Path
+
+import matplotlib
+
+matplotlib.use("Agg")
+
+import matplotlib.pyplot as plt
+import pandas as pd
+from matplotlib.figure import Figure
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from src.charts import (
+    plot_correlation_matrix,
+    plot_cumulative_returns,
+    plot_drawdowns,
+    plot_monte_carlo_paths,
+)
+
+
+def test_plot_cumulative_returns_returns_figure():
+    """Return a matplotlib Figure for cumulative returns."""
+    cumulative_returns = pd.DataFrame(
+        {"ALPHA": [0.00, 0.10], "BETA": [0.00, -0.05]},
+        index=pd.to_datetime(["2026-01-01", "2026-01-02"]),
+    )
+
+    figure = plot_cumulative_returns(cumulative_returns)
+
+    assert isinstance(figure, Figure)
+    plt.close(figure)
+
+
+def test_plot_drawdowns_returns_figure():
+    """Return a matplotlib Figure for drawdowns."""
+    drawdowns = pd.DataFrame(
+        {"ALPHA": [0.00, -0.10], "BETA": [0.00, -0.05]},
+        index=pd.to_datetime(["2026-01-01", "2026-01-02"]),
+    )
+
+    figure = plot_drawdowns(drawdowns)
+
+    assert isinstance(figure, Figure)
+    plt.close(figure)
+
+
+def test_plot_correlation_matrix_returns_figure():
+    """Return a matplotlib Figure for a return correlation matrix."""
+    returns = pd.DataFrame(
+        {"ALPHA": [0.01, 0.02, -0.01], "BETA": [0.00, 0.03, -0.02]}
+    )
+
+    figure = plot_correlation_matrix(returns)
+
+    assert isinstance(figure, Figure)
+    plt.close(figure)
+
+
+def test_plot_monte_carlo_paths_returns_figure():
+    """Return a matplotlib Figure for Monte Carlo simulation paths."""
+    simulations = pd.DataFrame(
+        {
+            "Simulation 1": [1000, 1010, 1020],
+            "Simulation 2": [1000, 990, 995],
+        }
+    )
+
+    figure = plot_monte_carlo_paths(simulations)
+
+    assert isinstance(figure, Figure)
+    plt.close(figure)
