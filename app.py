@@ -671,6 +671,193 @@ st.markdown(
         background: #1f1f1f;
     }
 
+    /* Final contrast pass: Material-style dark theme with clear elevation.
+       Dark surfaces get lighter as they rise, while text uses stronger
+       high/medium emphasis levels so controls stay readable. */
+    html,
+    body,
+    #root,
+    .stApp,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stMain"] {
+        background: #182030 !important;
+        color: #f8fafc !important;
+        color-scheme: dark !important;
+    }
+
+    header[data-testid="stHeader"],
+    .stApp > header,
+    .stAppHeader,
+    div[data-testid="stToolbar"],
+    div[data-testid="stDecoration"] {
+        background: #182030 !important;
+        border-bottom-color: #52647d !important;
+    }
+
+    .stApp h1,
+    .stApp h2,
+    .stApp h3,
+    .stApp h4,
+    .stApp h5,
+    .stApp h6 {
+        color: #f8fafc !important;
+    }
+
+    .stApp p,
+    .stApp label,
+    .stApp span,
+    .stApp li,
+    .stApp small,
+    [data-testid="stMarkdownContainer"] {
+        color: #eef4fb !important;
+    }
+
+    [data-testid="stSidebar"] {
+        background: #202a3a !important;
+        border-right: 1px solid #52647d !important;
+    }
+
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3 {
+        color: #f8fafc !important;
+    }
+
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] span,
+    [data-testid="stSidebar"] small {
+        color: #eef4fb !important;
+        opacity: 1 !important;
+    }
+
+    [data-testid="stSidebar"] [role="radiogroup"] label,
+    [data-testid="stSidebar"] [role="radiogroup"] label *,
+    [data-testid="stSidebar"] [data-testid="stCheckbox"] label,
+    [data-testid="stSidebar"] [data-testid="stCheckbox"] label * {
+        color: #eef4fb !important;
+        opacity: 1 !important;
+    }
+
+    .stApp input,
+    .stApp textarea,
+    .stApp div[data-baseweb="input"],
+    .stApp div[data-baseweb="select"] > div,
+    [data-testid="stSidebar"] input,
+    [data-testid="stSidebar"] textarea {
+        background: #2f3b4f !important;
+        border-color: #7b8ea8 !important;
+        color: #f8fafc !important;
+    }
+
+    div[data-testid="stVerticalBlockBorderWrapper"],
+    div[data-testid="stExpander"] {
+        background: #263244 !important;
+        border: 1px solid #5f7189 !important;
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18) !important;
+    }
+
+    div[data-testid="stExpander"] summary {
+        background: #2f3b4f !important;
+        border-bottom: 1px solid #5f7189 !important;
+        border-radius: 8px 8px 0 0 !important;
+    }
+
+    div[data-testid="stExpander"] summary p {
+        color: #f8fafc !important;
+    }
+
+    .dashboard-hero {
+        background:
+            radial-gradient(circle at 82% 18%, rgba(103, 232, 249, 0.24), transparent 34%),
+            linear-gradient(135deg, #202a3a 0%, #263244 56%, #1e5f6f 100%) !important;
+        border-color: #5f7189 !important;
+    }
+
+    .dashboard-hero p,
+    .panel-note,
+    .section-note,
+    .risk-table-note,
+    .metric-detail,
+    div[data-testid="stMetricLabel"] p {
+        color: #dce7f3 !important;
+    }
+
+    .dashboard-eyebrow,
+    .ticker-price,
+    button[data-baseweb="tab"][aria-selected="true"] p {
+        color: #5eead4 !important;
+    }
+
+    .hero-pill,
+    .metric-card,
+    .ticker-chip {
+        background: #2f3b4f !important;
+        border: 1px solid #5f7189 !important;
+    }
+
+    .metric-label,
+    .hero-pill-label {
+        color: #dce7f3 !important;
+    }
+
+    .metric-value,
+    .hero-pill-value,
+    .ticker-symbol {
+        color: #ffffff !important;
+    }
+
+    .dark-table-wrap {
+        background: #263244 !important;
+        border: 1px solid #7b8ea8 !important;
+        box-shadow: inset 0 0 0 1px rgba(226, 232, 240, 0.14);
+    }
+
+    table.dark-table {
+        color: #f8fafc !important;
+        font-size: 0.88rem;
+    }
+
+    table.dark-table thead th {
+        background: #202a3a !important;
+        border-bottom: 2px solid #8fa3bd !important;
+        color: #ffffff !important;
+    }
+
+    table.dark-table tbody tr:nth-child(odd) {
+        background: #263244 !important;
+    }
+
+    table.dark-table tbody tr:nth-child(even) {
+        background: #324056 !important;
+    }
+
+    table.dark-table tbody th,
+    table.dark-table tbody td {
+        border-bottom: 1px solid #71839b !important;
+        border-right: 1px solid #52647d !important;
+        color: #f8fafc !important;
+    }
+
+    table.dark-table tbody th {
+        color: #e2e8f0 !important;
+        font-weight: 700;
+    }
+
+    table.dark-table tbody tr:hover {
+        background: #3c4b63 !important;
+    }
+
+    div[data-testid="stAlert"] {
+        background: #17324f !important;
+        border-color: #60a5fa !important;
+    }
+
+    div[data-testid="stAlert"] p,
+    div[data-testid="stAlert"] span {
+        color: #e0f2fe !important;
+    }
+
     div[data-baseweb="radio"] label,
     div[data-baseweb="checkbox"] label {
         opacity: 1 !important;

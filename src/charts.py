@@ -16,11 +16,11 @@ CHART_COLORS = [
     "#fb7185",
     "#facc15",
 ]
-CHART_BACKGROUND = "#151515"
-GRID_COLOR = "#2a2a2a"
+CHART_BACKGROUND = "#263244"
+GRID_COLOR = "#6b7d95"
 TEXT_COLOR = "#f5f7fb"
-MUTED_TEXT_COLOR = "#a3a3a3"
-SPINE_COLOR = "#343434"
+MUTED_TEXT_COLOR = "#e2e8f0"
+SPINE_COLOR = "#8fa3bd"
 
 plt.rcParams.update(
     {
@@ -41,7 +41,7 @@ def _apply_clean_axis_style(axis):
     """Apply simple dashboard-friendly styling to a matplotlib axis."""
     axis.set_axisbelow(True)
     axis.set_facecolor(CHART_BACKGROUND)
-    axis.grid(True, linestyle="--", linewidth=0.6, color=GRID_COLOR, alpha=0.75)
+    axis.grid(True, linestyle="--", linewidth=0.7, color=GRID_COLOR, alpha=0.78)
     axis.spines["top"].set_visible(False)
     axis.spines["right"].set_visible(False)
     axis.spines["left"].set_color(SPINE_COLOR)
@@ -62,8 +62,8 @@ def _style_legend(legend):
     if legend is None:
         return
 
-    legend.get_frame().set_facecolor("#1f1f1f")
-    legend.get_frame().set_edgecolor("#343434")
+    legend.get_frame().set_facecolor("#324056")
+    legend.get_frame().set_edgecolor("#8fa3bd")
     for text in legend.get_texts():
         text.set_color(TEXT_COLOR)
     title = legend.get_title()
