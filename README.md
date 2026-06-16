@@ -21,6 +21,10 @@ The aim is to show how technical problem-solving skills can transfer into financ
 - Historical 95% one-day Value at Risk
 - Scenario stress testing
 - Monte Carlo simulation
+- Advanced correlated asset-level Monte Carlo simulation using historical covariance
+- Simulated VaR
+- Expected Shortfall / CVaR
+- Probability of loss
 - Tested calculation modules using pytest
 
 ## Skills Demonstrated
@@ -34,6 +38,10 @@ The aim is to show how technical problem-solving skills can transfer into financ
 - Financial risk analytics
 - Data validation
 - Scenario analysis
+- covariance modelling
+- simulation-based risk analysis
+- Expected Shortfall / CVaR
+- portfolio risk modelling
 - Dashboard design
 
 ## Risk Metrics Explained
@@ -51,6 +59,8 @@ The aim is to show how technical problem-solving skills can transfer into financ
 **Stress testing** applies hypothetical shocks, such as a 10% market fall, to estimate how the portfolio value could change under a chosen scenario.
 
 **Monte Carlo simulation** generates many possible portfolio paths using historical average return and volatility. In this project it is a simplified uncertainty model, not a forecast of future prices.
+
+**Advanced correlated Monte Carlo simulation** compares with the basic model by adding asset-level relationships. Unlike the basic Monte Carlo model, the correlated simulation models assets jointly using their historical covariance matrix, so it captures how holdings may move together during simulated market conditions.
 
 ## How To Run Locally
 
