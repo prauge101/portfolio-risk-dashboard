@@ -30,9 +30,10 @@ from src.portfolio import (
     validate_weights,
 )
 import src.risk as risk
-from src.ui_components import inject_global_styles, kpi_card, page_header
+import src.ui_components as ui
 
 risk = importlib.reload(risk)
+ui = importlib.reload(ui)
 
 
 YFINANCE_PRESETS = {
@@ -76,13 +77,32 @@ def format_date(value) -> str:
 def metric_card(label: str, value: str, detail: str = "", tone: str = "blue") -> None:
     """Render a compact dashboard metric card."""
     st.markdown(
-        f"""
-        <div class="metric-card metric-card-{escape(tone)}">
-            <div class="metric-label">{escape(label)}</div>
-            <div class="metric-value">{escape(value)}</div>
-            <div class="metric-detail">{escape(detail)}</div>
-        </div>
-        """,
+        metric_card_html(label, value, detail, tone),
+        unsafe_allow_html=True,
+    )
+
+
+def metric_card_html(label: str, value: str, detail: str = "", tone: str = "blue") -> str:
+    """Build metric card HTML so rows can be rendered in a contained CSS grid."""
+    return (
+        f'<div class="metric-card metric-card-{escape(tone)}" '
+        'style="box-sizing: border-box; display: block; max-width: 100%; '
+        'overflow: hidden; width: 100%;">'
+        f'<div class="metric-label">{escape(label)}</div>'
+        f'<div class="metric-value">{escape(value)}</div>'
+        f'<div class="metric-detail">{escape(detail)}</div>'
+        "</div>"
+    )
+
+
+def metric_card_grid(cards: list[tuple[str, str, str, str]]) -> None:
+    """Render metric cards in a responsive grid that stays inside containers."""
+    card_html = "".join(
+        metric_card_html(label, value, detail, tone)
+        for label, value, detail, tone in cards
+    )
+    st.markdown(
+        f'<div class="metric-card-grid">{card_html}</div>',
         unsafe_allow_html=True,
     )
 
@@ -875,8 +895,8 @@ st.markdown(
 )
 '''
 
-inject_global_styles()
-page_header(
+ui.inject_global_styles()
+ui.page_header(
     "Portfolio Risk Dashboard",
     (
         "Analyse portfolio risk from price data using returns, volatility, "
@@ -1052,17 +1072,15 @@ if not show_monte_carlo:
 ticker_chip_row(price_data)
 
 st.subheader("Dataset Overview")
-data_col1, data_col2, data_col3, data_col4, data_col5 = st.columns(5)
-with data_col1:
-    kpi_card("Tickers", str(len(tickers)), "Assets detected", "blue")
-with data_col2:
-    kpi_card("Price Rows", f"{len(price_data):,}", "Raw observations", "slate")
-with data_col3:
-    kpi_card("Return Days", f"{len(daily_returns):,}", "Calculated periods", "green")
-with data_col4:
-    kpi_card("Start Date", format_date(price_data["Date"].min()), "First price", "amber")
-with data_col5:
-    kpi_card("End Date", format_date(price_data["Date"].max()), "Latest price", "red")
+metric_card_grid(
+    [
+        ("Tickers", str(len(tickers)), "Assets detected", "blue"),
+        ("Price Rows", f"{len(price_data):,}", "Raw observations", "slate"),
+        ("Return Days", f"{len(daily_returns):,}", "Calculated periods", "green"),
+        ("Start Date", format_date(price_data["Date"].min()), "First price", "amber"),
+        ("End Date", format_date(price_data["Date"].max()), "Latest price", "red"),
+    ]
+)
 
 with st.expander("Raw price data preview", expanded=False):
     preview_data = price_data.head(20).copy()
@@ -1099,8 +1117,8 @@ with asset_tab:
         with st.container(border=True):
             st.subheader("Maximum Drawdown")
             st.markdown(
-                '<p class="risk-table-note">Maximum drawdown is the worst fall from a '
-                "previous peak during the selected period.</p>",
+                '<p class="risk-table-note">Worst peak-to-trough fall in the selected '
+                "period.</p>",
                 unsafe_allow_html=True,
             )
             max_drawdown = calculate_max_drawdown(cumulative_returns)
@@ -1153,35 +1171,34 @@ with portfolio_tab:
         ).iloc[0]
         final_cumulative_return = portfolio_cumulative_returns.iloc[-1]
 
-        metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
-        with metric_col1:
-            metric_card(
-                "Cumulative Return",
-                format_percent(final_cumulative_return),
-                "Weighted portfolio result",
-                "green",
-            )
-        with metric_col2:
-            metric_card(
-                "Historical VaR (95%, 1-day)",
-                format_percent(historical_var),
-                "5th percentile daily portfolio loss",
-                "red",
-            )
-        with metric_col3:
-            metric_card(
-                "Annualised Volatility",
-                format_percent(portfolio_volatility),
-                "Annualised from daily returns using 252 trading days",
-                "amber",
-            )
-        with metric_col4:
-            metric_card(
-                "Max Drawdown",
-                format_percent(portfolio_max_drawdown),
-                "Worst peak-to-trough fall",
-                "blue",
-            )
+        metric_card_grid(
+            [
+                (
+                    "Cumulative Return",
+                    format_percent(final_cumulative_return),
+                    "Weighted portfolio result",
+                    "green",
+                ),
+                (
+                    "Historical VaR (95%, 1-day)",
+                    format_percent(historical_var),
+                    "5th percentile daily portfolio loss",
+                    "red",
+                ),
+                (
+                    "Annualised Volatility",
+                    format_percent(portfolio_volatility),
+                    "Annualised from daily returns using 252 trading days",
+                    "amber",
+                ),
+                (
+                    "Max Drawdown",
+                    format_percent(portfolio_max_drawdown),
+                    "Worst peak-to-trough fall",
+                    "blue",
+                ),
+            ]
+        )
 
         with st.container(border=True):
             st.subheader("Portfolio Cumulative Return")
@@ -1245,28 +1262,28 @@ with portfolio_tab:
             except ValueError as error:
                 st.error(str(error))
             else:
-                stress_metric_col1, stress_metric_col2, stress_metric_col3 = st.columns(3)
-                with stress_metric_col1:
-                    metric_card(
+                metric_card_grid(
+                    [
+                        (
                         "Portfolio impact",
                         format_percent(stress_result["portfolio_impact_percent"]),
                         "Weighted shock effect",
                         "red",
-                    )
-                with stress_metric_col2:
-                    metric_card(
+                        ),
+                        (
                         "Estimated value impact",
                         f"£{stress_result['portfolio_impact_value']:,.2f}",
                         "Change in portfolio value",
                         "amber",
-                    )
-                with stress_metric_col3:
-                    metric_card(
+                        ),
+                        (
                         "Stressed portfolio value",
                         f"£{stress_result['stressed_portfolio_value']:,.2f}",
                         "Value after scenario shock",
                         "blue",
-                    )
+                        ),
+                    ]
+                )
 
         with st.expander("Monte Carlo risk simulation", expanded=False):
             if show_monte_carlo:
@@ -1367,51 +1384,53 @@ with portfolio_tab:
                 except ValueError as error:
                     st.error(str(error))
                 else:
-                    summary_col1, summary_col2, summary_col3 = st.columns(3)
-                    with summary_col1:
-                        metric_card(
-                            "Median final value",
-                            f"${simulation_summary['median_final_value']:,.2f}",
-                            "Middle simulated ending value",
-                            "blue",
-                        )
-                    with summary_col2:
-                        metric_card(
-                            "5th percentile final value",
-                            f"${simulation_summary['percentile_5_final_value']:,.2f}",
-                            "Downside final-value threshold",
-                            "red",
-                        )
-                    with summary_col3:
-                        metric_card(
-                            "95th percentile final value",
-                            f"${simulation_summary['percentile_95_final_value']:,.2f}",
-                            "Upside final-value threshold",
-                            "green",
-                        )
+                    metric_card_grid(
+                        [
+                            (
+                                "Median final value",
+                                f"${simulation_summary['median_final_value']:,.2f}",
+                                "Middle simulated ending value",
+                                "blue",
+                            ),
+                            (
+                                "5th percentile final value",
+                                f"${simulation_summary['percentile_5_final_value']:,.2f}",
+                                "Downside final-value threshold",
+                                "red",
+                            ),
+                            (
+                                "95th percentile final value",
+                                f"${simulation_summary['percentile_95_final_value']:,.2f}",
+                                "Upside final-value threshold",
+                                "green",
+                            ),
+                        ]
+                    )
 
-                    risk_col1, risk_col2, risk_col3 = st.columns(3)
-                    with risk_col1:
-                        metric_card(
-                            "Probability of loss",
-                            format_percent(simulation_summary["probability_of_loss"]),
-                            "Share ending below initial value",
-                            "amber",
-                        )
-                    with risk_col2:
-                        metric_card(
-                            "Simulated VaR",
-                            f"${simulation_summary['simulated_var']:,.2f}",
-                            "Loss at the 5th percentile final value",
-                            "red",
-                        )
-                    with risk_col3:
-                        metric_card(
-                            "Expected Shortfall",
-                            f"${simulation_summary['expected_shortfall']:,.2f}",
-                            "Average loss in the worst 5% of outcomes",
-                            "slate",
-                        )
+                    metric_card_grid(
+                        [
+                            (
+                                "Probability of loss",
+                                format_percent(
+                                    simulation_summary["probability_of_loss"]
+                                ),
+                                "Share ending below initial value",
+                                "amber",
+                            ),
+                            (
+                                "Simulated VaR",
+                                f"${simulation_summary['simulated_var']:,.2f}",
+                                "Loss at the 5th percentile final value",
+                                "red",
+                            ),
+                            (
+                                "Expected Shortfall",
+                                f"${simulation_summary['expected_shortfall']:,.2f}",
+                                "Average loss in the worst 5% of outcomes",
+                                "slate",
+                            ),
+                        ]
+                    )
 
                     st.pyplot(
                         plot_monte_carlo_paths(correlated_simulation_paths),

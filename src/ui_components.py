@@ -112,6 +112,12 @@ def inject_global_styles() -> None:
             box-shadow: var(--shadow) !important;
         }
 
+        div[data-testid="stHorizontalBlock"],
+        div[data-testid="column"],
+        div[data-testid="column"] > div {
+            min-width: 0 !important;
+        }
+
         div[data-testid="stExpander"] summary {
             background: var(--card-muted) !important;
             border-radius: 14px 14px 0 0 !important;
@@ -231,11 +237,15 @@ def inject_global_styles() -> None:
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 16px;
+            box-sizing: border-box;
             box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+            display: block;
+            margin-bottom: 0.65rem;
             min-height: 126px;
             overflow: hidden;
             padding: 1rem 1rem 0.9rem 1rem;
             position: relative;
+            width: 100%;
         }
 
         .kpi-card::before {
@@ -297,10 +307,26 @@ def inject_global_styles() -> None:
             background: var(--card-bg) !important;
             border: 1px solid var(--border) !important;
             border-radius: 16px !important;
+            box-sizing: border-box;
             box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06) !important;
+            display: block;
+            margin-bottom: 0.65rem;
             min-height: 118px;
+            overflow: hidden;
             padding: 1rem 1rem 0.9rem 1rem;
             position: relative;
+            width: 100%;
+        }
+
+        .metric-card-grid {
+            box-sizing: border-box;
+            display: grid;
+            gap: 0.75rem;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            margin: 0.15rem 0 0.75rem 0;
+            max-width: 100%;
+            overflow: hidden;
+            width: 100%;
         }
 
         .metric-label {
@@ -540,13 +566,15 @@ def page_header(title: str, subtitle: str, badges: list[tuple[str, str]]) -> Non
 def kpi_card(label: str, value: str, detail: str = "", tone: str = "blue") -> None:
     """Render a premium light-mode KPI card."""
     st.markdown(
-        f"""
-        <div class="kpi-card kpi-card-{escape(tone)}">
-            <div class="kpi-label">{escape(label)}</div>
-            <div class="kpi-value">{escape(value)}</div>
-            <div class="kpi-detail">{escape(detail)}</div>
-        </div>
-        """,
+        (
+            f'<div class="kpi-card kpi-card-{escape(tone)}" '
+            'style="box-sizing: border-box; display: block; max-width: 100%; '
+            'overflow: hidden; width: 100%;">'
+            f'<div class="kpi-label">{escape(label)}</div>'
+            f'<div class="kpi-value">{escape(value)}</div>'
+            f'<div class="kpi-detail">{escape(detail)}</div>'
+            "</div>"
+        ),
         unsafe_allow_html=True,
     )
 
