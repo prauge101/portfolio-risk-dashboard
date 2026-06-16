@@ -1,6 +1,8 @@
 # Portfolio Risk Dashboard
 
-A Python and Streamlit dashboard for analysing portfolio risk using historical market data, return calculations, volatility, drawdowns, correlation, historical Value at Risk, stress testing and Monte Carlo simulation.
+A Streamlit dashboard for exploring portfolio risk from price data. The project focuses on clear, testable Python calculations for returns, volatility, drawdowns, Value at Risk, stress testing and Monte Carlo simulation.
+
+I built this as a student portfolio project to practise applying data analysis and engineering-style modelling to finance and risk analytics.
 
 ## Dashboard Preview
 
@@ -16,67 +18,58 @@ A Python and Streamlit dashboard for analysing portfolio risk using historical m
 **Correlated Monte Carlo simulation**
 ![Correlated Monte Carlo simulation](assets/correlated-monte-carlo.png)
 
-## Why I Built This
+## Features
 
-I built this project as a Mechanical Engineering student applying engineering-style modelling, stress testing and quantitative analysis to financial markets and risk analytics.
+- Load demo data, upload a CSV, or fetch optional yfinance data
+- Calculate daily and cumulative returns
+- Measure annualised volatility
+- Analyse drawdowns and maximum drawdown
+- View return correlations between assets
+- Set custom portfolio weights
+- Calculate historical 95% one-day Value at Risk
+- Run scenario stress tests
+- Run a basic portfolio-level Monte Carlo simulation
+- Run a correlated asset-level Monte Carlo simulation using historical covariance
+- Summarise simulated VaR, Expected Shortfall / CVaR and probability of loss
 
-The aim is to show how technical problem-solving skills can transfer into finance, fintech, risk analytics and technology consulting: cleaning data, validating assumptions, calculating risk metrics, testing calculation logic and presenting results in a clear dashboard.
-
-## Key Features
-
-- Demo synthetic data for quick testing
-- CSV upload for custom portfolio price data
-- Optional yfinance market data source
-- Daily and cumulative return calculations
-- Annualised volatility
-- Drawdown and max drawdown
-- Correlation matrix
-- Portfolio weighting
-- Historical 95% one-day Value at Risk
-- Scenario stress testing
-- Monte Carlo simulation
-- Advanced correlated asset-level Monte Carlo simulation using historical covariance
-- Simulated VaR
-- Expected Shortfall / CVaR
-- Probability of loss
-- Tested calculation modules using pytest
-
-## Skills Demonstrated
+## Tech Stack
 
 - Python
 - pandas
 - NumPy
-- Streamlit
 - matplotlib
+- Streamlit
 - pytest
-- Financial risk analytics
-- Data validation
-- Scenario analysis
-- covariance modelling
-- simulation-based risk analysis
-- Expected Shortfall / CVaR
-- portfolio risk modelling
-- Dashboard design
 
-## Risk Metrics Explained
+## Project Structure
 
-**Returns** show how much an asset or portfolio has gained or lost over a period. Daily returns measure one-day price changes, while cumulative returns show the compounded result over time.
+```text
+app.py                  Streamlit dashboard UI
+src/                    Calculation, chart and UI helper modules
+tests/                  pytest tests for the calculation logic
+data/sample_prices.csv  Synthetic demo price data
+assets/                 README screenshots
+```
 
-**Volatility** measures how much returns move up and down. Higher volatility means the investment has had larger historical swings, which is one way to describe risk.
+The calculation logic is kept separate from the Streamlit app so the finance functions can be tested directly.
 
-**Drawdown** shows how far an asset or portfolio has fallen from its previous high. Max drawdown shows the worst peak-to-trough fall in the selected period.
+## Risk Metrics
 
-**Correlation** measures how closely assets move together. Low or negative correlation can indicate diversification benefits because assets may not all rise or fall at the same time.
+**Returns** measure price changes over time. Cumulative returns are compounded rather than summed.
 
-**Value at Risk (VaR)** estimates a loss threshold based on historical returns. A 95% one-day historical VaR uses the lower 5% of daily portfolio returns to estimate a potential one-day loss level.
+**Volatility** measures how much returns vary. The dashboard annualises daily volatility using 252 trading days.
 
-**Stress testing** applies hypothetical shocks, such as a 10% market fall, to estimate how the portfolio value could change under a chosen scenario.
+**Drawdown** measures the fall from a previous peak. Maximum drawdown is the worst peak-to-trough decline in the selected period.
 
-**Monte Carlo simulation** generates many possible portfolio paths using historical average return and volatility. In this project it is a simplified uncertainty model, not a forecast of future prices.
+**Correlation** is calculated on returns, not prices, to show how assets have moved together historically.
 
-**Advanced correlated Monte Carlo simulation** compares with the basic model by adding asset-level relationships. Unlike the basic Monte Carlo model, the correlated simulation models assets jointly using their historical covariance matrix, so it captures how holdings may move together during simulated market conditions.
+**Historical VaR** uses the lower tail of historical portfolio returns and reports the result as a positive loss.
 
-## How To Run Locally
+**Stress testing** applies user-defined or preset shocks to each holding. Shocks are handled as decimal returns in the calculation layer.
+
+**Monte Carlo simulation** is included as a simplified risk illustration, not a forecast. The correlated version simulates assets jointly using their historical covariance matrix.
+
+## Run Locally
 
 ```powershell
 python -m venv .venv
@@ -87,9 +80,9 @@ python -m pip install -r requirements.txt
 
 Then open the local Streamlit URL shown in the terminal.
 
-## Required CSV Format
+## CSV Format
 
-Upload a CSV with these columns:
+Custom CSV files should contain:
 
 ```text
 Date,Ticker,Close
@@ -103,7 +96,7 @@ Date,Ticker,Close
 2026-01-02,MSFT,412.21
 ```
 
-## Testing
+## Tests
 
 Run the test suite with:
 
@@ -111,22 +104,19 @@ Run the test suite with:
 .\.venv\Scripts\pytest.exe tests
 ```
 
-The tests cover the calculation modules for data loading, returns, volatility, drawdown, portfolio weights, Value at Risk, stress testing, Monte Carlo simulation and chart helpers.
+The tests include hand-calculated examples for the main finance calculations.
 
 ## Limitations
 
-- Demo data is synthetic and is not real investment data.
-- yfinance data is for educational and research use only.
-- Risk metrics are simplified and intended for learning.
-- Historical performance does not predict future performance.
-- This dashboard does not provide investment advice.
-
-Market data is fetched using yfinance for educational and research purposes. yfinance is not affiliated with, endorsed by, or vetted by Yahoo. Data may be delayed, unavailable, or subject to Yahoo's terms of use.
+- The demo data is synthetic.
+- yfinance data is optional and may be delayed or unavailable.
+- The risk models are simplified for learning and portfolio-project purposes.
+- Historical data and simulations do not predict future returns.
+- This project is not investment advice.
 
 ## Future Improvements
 
-- More advanced risk models
-- Factor exposure analysis
-- Better portfolio optimisation
-- Exportable reports
-- Deployment on Streamlit Community Cloud
+- Add exportable reports
+- Add more portfolio optimisation tools
+- Add factor exposure analysis
+- Deploy the dashboard online
