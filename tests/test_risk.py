@@ -12,7 +12,9 @@ from pandas.testing import assert_frame_equal
 
 from src.risk import (
     calculate_historical_var,
+    calculate_simulation_summary,
     calculate_stress_test_loss,
+    run_correlated_monte_carlo_simulation,
     run_monte_carlo_simulation,
 )
 
@@ -158,3 +160,119 @@ def test_run_monte_carlo_simulation_raises_value_error_for_bad_initial_value():
 
     with pytest.raises(ValueError, match="initial_value must be greater than 0"):
         run_monte_carlo_simulation(portfolio_returns, initial_value=0)
+
+
+def test_run_correlated_monte_carlo_simulation_returns_expected_shape():
+    """Return one simulated path per column and include the starting row."""
+    returns_df = pd.DataFrame(
+        {
+            "ALPHA": [0.01, -0.02, 0.03, 0.00],
+            "BETA": [0.00, 0.01, -0.01, 0.02],
+        }
+    )
+    weights = {"ALPHA": 0.60, "BETA": 0.40}
+
+    result = run_correlated_monte_carlo_simulation(
+        returns_df,
+        weights,
+        num_simulations=4,
+        num_days=6,
+        initial_value=1000,
+    )
+
+    assert result.shape == (7, 4)
+
+
+def test_run_correlated_monte_carlo_simulation_first_row_equals_initial_value():
+    """Start every correlated simulation at the same portfolio value."""
+    returns_df = pd.DataFrame(
+        {
+            "ALPHA": [0.01, -0.02, 0.03, 0.00],
+            "BETA": [0.00, 0.01, -0.01, 0.02],
+        }
+    )
+    weights = {"ALPHA": 0.60, "BETA": 0.40}
+
+    result = run_correlated_monte_carlo_simulation(
+        returns_df,
+        weights,
+        num_simulations=3,
+        num_days=5,
+        initial_value=1000,
+    )
+
+    assert result.iloc[0].tolist() == [1000, 1000, 1000]
+
+
+def test_run_correlated_monte_carlo_simulation_same_seed_gives_same_result():
+    """Use the random seed to make correlated simulations reproducible."""
+    returns_df = pd.DataFrame(
+        {
+            "ALPHA": [0.01, -0.02, 0.03, 0.00],
+            "BETA": [0.00, 0.01, -0.01, 0.02],
+        }
+    )
+    weights = {"ALPHA": 0.60, "BETA": 0.40}
+
+    first_result = run_correlated_monte_carlo_simulation(
+        returns_df,
+        weights,
+        num_simulations=3,
+        num_days=5,
+        random_seed=7,
+    )
+    second_result = run_correlated_monte_carlo_simulation(
+        returns_df,
+        weights,
+        num_simulations=3,
+        num_days=5,
+        random_seed=7,
+    )
+
+    assert_frame_equal(first_result, second_result)
+
+
+def test_run_correlated_monte_carlo_simulation_raises_for_missing_weight_ticker():
+    """Raise a clear error when a weighted ticker is absent from returns data."""
+    returns_df = pd.DataFrame({"ALPHA": [0.01, -0.02, 0.03, 0.00]})
+    weights = {"ALPHA": 0.60, "BETA": 0.40}
+
+    with pytest.raises(ValueError, match="Missing return data for ticker\\(s\\): BETA"):
+        run_correlated_monte_carlo_simulation(returns_df, weights)
+
+
+def test_calculate_simulation_summary_returns_expected_keys():
+    """Return the dashboard summary fields for final simulated values."""
+    simulation_df = pd.DataFrame(
+        {
+            "Simulation 1": [1000, 1050, 1100],
+            "Simulation 2": [1000, 950, 900],
+            "Simulation 3": [1000, 1020, 1030],
+        }
+    )
+
+    result = calculate_simulation_summary(simulation_df, initial_value=1000)
+
+    assert set(result) == {
+        "median_final_value",
+        "percentile_5_final_value",
+        "percentile_95_final_value",
+        "probability_of_loss",
+        "simulated_var",
+        "expected_shortfall",
+    }
+
+
+def test_calculate_simulation_summary_probability_of_loss_is_between_zero_and_one():
+    """Return probability of loss as a valid share of simulations."""
+    simulation_df = pd.DataFrame(
+        {
+            "Simulation 1": [1000, 1050, 1100],
+            "Simulation 2": [1000, 950, 900],
+            "Simulation 3": [1000, 1020, 1030],
+        }
+    )
+
+    result = calculate_simulation_summary(simulation_df, initial_value=1000)
+
+    assert 0 <= result["probability_of_loss"] <= 1

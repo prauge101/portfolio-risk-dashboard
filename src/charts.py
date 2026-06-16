@@ -9,18 +9,18 @@ from matplotlib.ticker import PercentFormatter, StrMethodFormatter
 
 
 CHART_COLORS = [
-    "#2dd4bf",
-    "#60a5fa",
-    "#a78bfa",
-    "#f97316",
-    "#fb7185",
-    "#facc15",
+    "#2563eb",
+    "#0891b2",
+    "#059669",
+    "#d97706",
+    "#dc2626",
+    "#7c3aed",
 ]
-CHART_BACKGROUND = "#263244"
-GRID_COLOR = "#6b7d95"
-TEXT_COLOR = "#f5f7fb"
-MUTED_TEXT_COLOR = "#e2e8f0"
-SPINE_COLOR = "#8fa3bd"
+CHART_BACKGROUND = "#ffffff"
+GRID_COLOR = "#dbe4f0"
+TEXT_COLOR = "#111827"
+MUTED_TEXT_COLOR = "#475569"
+SPINE_COLOR = "#c6d3e1"
 
 plt.rcParams.update(
     {
@@ -58,12 +58,12 @@ def _apply_clean_axis_style(axis):
 
 
 def _style_legend(legend):
-    """Style matplotlib legends for the dark dashboard theme."""
+    """Style matplotlib legends for the light dashboard theme."""
     if legend is None:
         return
 
-    legend.get_frame().set_facecolor("#324056")
-    legend.get_frame().set_edgecolor("#8fa3bd")
+    legend.get_frame().set_facecolor("#ffffff")
+    legend.get_frame().set_edgecolor("#c6d3e1")
     for text in legend.get_texts():
         text.set_color(TEXT_COLOR)
     title = legend.get_title()
@@ -84,7 +84,7 @@ def _style_colorbar(colorbar):
 
 
 def _create_dark_figure(width: float = 9, height: float = 4.6):
-    """Create a matplotlib figure and axis using the dashboard dark surface."""
+    """Create a matplotlib figure and axis using the dashboard light surface."""
     figure, axis = plt.subplots(figsize=(width, height))
     figure.patch.set_facecolor(CHART_BACKGROUND)
     figure.patch.set_alpha(1.0)
@@ -94,7 +94,7 @@ def _create_dark_figure(width: float = 9, height: float = 4.6):
 
 
 def _finish_dark_figure(figure, axis):
-    """Keep all visible matplotlib text readable on the dark dashboard theme."""
+    """Keep all visible matplotlib text readable on the light dashboard theme."""
     _apply_clean_axis_style(axis)
     figure.tight_layout()
 
@@ -163,7 +163,7 @@ def plot_correlation_matrix(returns_df):
                 column_index,
                 row_index,
                 f"{value:.2f}",
-                color="#f8fafc",
+                color=TEXT_COLOR,
                 ha="center",
                 va="center",
             )
@@ -194,8 +194,8 @@ def plot_monte_carlo_paths(simulation_df):
         trading_days,
         percentile_5.to_numpy(),
         percentile_95.to_numpy(),
-        color="#2dd4bf",
-        alpha=0.13,
+        color="#2563eb",
+        alpha=0.14,
         label="5th-95th percentile range",
     )
 
@@ -203,7 +203,7 @@ def plot_monte_carlo_paths(simulation_df):
         axis.plot(
             trading_days,
             paths_to_plot[column].to_numpy(),
-            color="#2dd4bf",
+            color="#2563eb",
             linewidth=0.7,
             alpha=0.12,
             label="_nolegend_",
@@ -212,7 +212,7 @@ def plot_monte_carlo_paths(simulation_df):
     median_line = axis.plot(
         trading_days,
         median_path.to_numpy(),
-        color="#f8fafc",
+        color="#111827",
         label="Median simulated path",
         linewidth=2.2,
     )[0]

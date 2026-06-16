@@ -1,5 +1,6 @@
 """Streamlit user interface for the Portfolio Risk Dashboard."""
 
+import importlib
 from html import escape
 
 import streamlit as st
@@ -28,11 +29,10 @@ from src.portfolio import (
     calculate_portfolio_returns,
     validate_weights,
 )
-from src.risk import (
-    calculate_historical_var,
-    calculate_stress_test_loss,
-    run_monte_carlo_simulation,
-)
+import src.risk as risk
+from src.ui_components import inject_global_styles, kpi_card, page_header
+
+risk = importlib.reload(risk)
 
 
 YFINANCE_PRESETS = {
@@ -138,6 +138,7 @@ def cached_fetch_yfinance_price_data(
     return fetch_yfinance_price_data(list(tickers), period=period, interval=interval)
 
 
+_LEGACY_INLINE_STYLES = '''
 st.markdown(
     """
     <style>
@@ -872,32 +873,20 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+'''
 
-st.markdown(
-    """
-    <div class="dashboard-hero">
-        <div>
-            <div class="dashboard-eyebrow">Risk analytics project</div>
-            <h1>Portfolio Risk Dashboard</h1>
-            <p>
-                Analyse portfolio risk from price data using returns, volatility,
-                drawdowns, correlations, historical Value at Risk, and a simple
-                Monte Carlo simulation.
-            </p>
-        </div>
-        <div class="hero-side">
-            <div class="hero-pill">
-                <div class="hero-pill-label">Input source</div>
-                <div class="hero-pill-value">CSV price data</div>
-            </div>
-            <div class="hero-pill">
-                <div class="hero-pill-label">Risk view</div>
-                <div class="hero-pill-value">Returns, VaR and simulations</div>
-            </div>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
+inject_global_styles()
+page_header(
+    "Portfolio Risk Dashboard",
+    (
+        "Analyse portfolio risk from price data using returns, volatility, "
+        "drawdowns, correlations, historical Value at Risk, and a simple "
+        "Monte Carlo simulation."
+    ),
+    [
+        ("Input source", "CSV price data"),
+        ("Risk view", "Returns, VaR and simulations"),
+    ],
 )
 
 st.sidebar.title("Portfolio Setup")
@@ -1065,15 +1054,15 @@ ticker_chip_row(price_data)
 st.subheader("Dataset Overview")
 data_col1, data_col2, data_col3, data_col4, data_col5 = st.columns(5)
 with data_col1:
-    metric_card("Tickers", str(len(tickers)), "Assets detected", "blue")
+    kpi_card("Tickers", str(len(tickers)), "Assets detected", "blue")
 with data_col2:
-    metric_card("Price Rows", f"{len(price_data):,}", "Raw observations", "slate")
+    kpi_card("Price Rows", f"{len(price_data):,}", "Raw observations", "slate")
 with data_col3:
-    metric_card("Return Days", f"{len(daily_returns):,}", "Calculated periods", "green")
+    kpi_card("Return Days", f"{len(daily_returns):,}", "Calculated periods", "green")
 with data_col4:
-    metric_card("Start Date", format_date(price_data["Date"].min()), "First price", "amber")
+    kpi_card("Start Date", format_date(price_data["Date"].min()), "First price", "amber")
 with data_col5:
-    metric_card("End Date", format_date(price_data["Date"].max()), "Latest price", "red")
+    kpi_card("End Date", format_date(price_data["Date"].max()), "Latest price", "red")
 
 with st.expander("Raw price data preview", expanded=False):
     preview_data = price_data.head(20).copy()
@@ -1152,7 +1141,7 @@ with portfolio_tab:
         portfolio_cumulative_returns = calculate_portfolio_cumulative_returns(
             portfolio_returns
         )
-        historical_var = calculate_historical_var(portfolio_returns)
+        historical_var = risk.calculate_historical_var(portfolio_returns)
     except ValueError as error:
         st.error(str(error))
     else:
@@ -1248,7 +1237,7 @@ with portfolio_tab:
                 shocks = {ticker: scenario_shock for ticker in tickers}
 
             try:
-                stress_result = calculate_stress_test_loss(
+                stress_result = risk.calculate_stress_test_loss(
                     weights,
                     shocks,
                     portfolio_value=float(stress_portfolio_value),
@@ -1314,13 +1303,120 @@ with portfolio_tab:
                         format="%.2f",
                     )
 
-                simulation_paths = run_monte_carlo_simulation(
+                simulation_paths = risk.run_monte_carlo_simulation(
                     portfolio_returns,
                     num_simulations=int(num_simulations),
                     num_days=int(num_days),
                     initial_value=float(initial_value),
                 )
                 st.pyplot(plot_monte_carlo_paths(simulation_paths), clear_figure=True)
+            else:
+                st.info("Monte Carlo simulation is disabled in the sidebar.")
+
+        with st.expander("Advanced correlated Monte Carlo", expanded=False):
+            if show_monte_carlo:
+                st.markdown(
+                    '<p class="section-note">This model simulates assets jointly '
+                    "using their historical covariance matrix, so it captures how "
+                    "portfolio holdings may move together.</p>",
+                    unsafe_allow_html=True,
+                )
+                st.markdown(
+                    '<p class="section-note">This is a simplified educational '
+                    "model, not a forecast of future portfolio values.</p>",
+                    unsafe_allow_html=True,
+                )
+
+                advanced_col1, advanced_col2, advanced_col3 = st.columns(3)
+                with advanced_col1:
+                    advanced_num_simulations = st.number_input(
+                        "Advanced simulations",
+                        min_value=100,
+                        max_value=5000,
+                        value=1000,
+                        step=100,
+                    )
+                with advanced_col2:
+                    advanced_num_days = st.selectbox(
+                        "Advanced horizon",
+                        [30, 90, 252, 1260],
+                        index=2,
+                        format_func=lambda days: f"{days} trading days",
+                    )
+                with advanced_col3:
+                    advanced_initial_value = st.number_input(
+                        "Advanced initial portfolio value",
+                        min_value=100.0,
+                        value=10000.0,
+                        step=500.0,
+                        format="%.2f",
+                    )
+
+                try:
+                    correlated_simulation_paths = risk.run_correlated_monte_carlo_simulation(
+                        daily_returns,
+                        weights,
+                        num_simulations=int(advanced_num_simulations),
+                        num_days=int(advanced_num_days),
+                        initial_value=float(advanced_initial_value),
+                    )
+                    simulation_summary = risk.calculate_simulation_summary(
+                        correlated_simulation_paths,
+                        initial_value=float(advanced_initial_value),
+                    )
+                except ValueError as error:
+                    st.error(str(error))
+                else:
+                    summary_col1, summary_col2, summary_col3 = st.columns(3)
+                    with summary_col1:
+                        metric_card(
+                            "Median final value",
+                            f"${simulation_summary['median_final_value']:,.2f}",
+                            "Middle simulated ending value",
+                            "blue",
+                        )
+                    with summary_col2:
+                        metric_card(
+                            "5th percentile final value",
+                            f"${simulation_summary['percentile_5_final_value']:,.2f}",
+                            "Downside final-value threshold",
+                            "red",
+                        )
+                    with summary_col3:
+                        metric_card(
+                            "95th percentile final value",
+                            f"${simulation_summary['percentile_95_final_value']:,.2f}",
+                            "Upside final-value threshold",
+                            "green",
+                        )
+
+                    risk_col1, risk_col2, risk_col3 = st.columns(3)
+                    with risk_col1:
+                        metric_card(
+                            "Probability of loss",
+                            format_percent(simulation_summary["probability_of_loss"]),
+                            "Share ending below initial value",
+                            "amber",
+                        )
+                    with risk_col2:
+                        metric_card(
+                            "Simulated VaR",
+                            f"${simulation_summary['simulated_var']:,.2f}",
+                            "Loss at the 5th percentile final value",
+                            "red",
+                        )
+                    with risk_col3:
+                        metric_card(
+                            "Expected Shortfall",
+                            f"${simulation_summary['expected_shortfall']:,.2f}",
+                            "Average loss in the worst 5% of outcomes",
+                            "slate",
+                        )
+
+                    st.pyplot(
+                        plot_monte_carlo_paths(correlated_simulation_paths),
+                        clear_figure=True,
+                    )
             else:
                 st.info("Monte Carlo simulation is disabled in the sidebar.")
 

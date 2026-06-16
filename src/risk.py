@@ -98,3 +98,100 @@ def run_monte_carlo_simulation(
     columns = [f"Simulation {number}" for number in range(1, num_simulations + 1)]
 
     return pd.DataFrame(simulation_paths, columns=columns)
+
+
+def run_correlated_monte_carlo_simulation(
+    returns_df: pd.DataFrame,
+    weights: dict,
+    num_simulations: int = 1000,
+    num_days: int = 252,
+    initial_value: float = 10000,
+    random_seed: int = 42,
+) -> pd.DataFrame:
+    """Generate portfolio paths from correlated asset-level return scenarios.
+
+    This simulation draws asset returns jointly from their historical mean
+    returns and covariance matrix. The covariance matrix is the finance concept
+    that captures how holdings have tended to move together, so the simulated
+    portfolio paths reflect diversification more directly than a one-series
+    portfolio simulation.
+    """
+    if returns_df.empty:
+        raise ValueError("returns_df must not be empty")
+    if num_simulations <= 0:
+        raise ValueError("num_simulations must be greater than 0")
+    if num_days <= 0:
+        raise ValueError("num_days must be greater than 0")
+    if initial_value <= 0:
+        raise ValueError("initial_value must be greater than 0")
+
+    missing_tickers = [ticker for ticker in weights if ticker not in returns_df.columns]
+    if missing_tickers:
+        missing = ", ".join(missing_tickers)
+        raise ValueError(f"Missing return data for ticker(s): {missing}")
+
+    tickers = list(weights.keys())
+    selected_returns = returns_df[tickers]
+    mean_returns = selected_returns.mean().to_numpy()
+    covariance_matrix = selected_returns.cov().to_numpy()
+    weight_array = np.array([weights[ticker] for ticker in tickers])
+
+    random_generator = np.random.default_rng(random_seed)
+    simulated_asset_returns = random_generator.multivariate_normal(
+        mean=mean_returns,
+        cov=covariance_matrix,
+        size=(num_days, num_simulations),
+    )
+
+    # Weighted asset returns turn each simulated market day into one portfolio return.
+    simulated_portfolio_returns = simulated_asset_returns @ weight_array
+    starting_values = np.full((1, num_simulations), initial_value)
+    simulated_values = initial_value * (1 + simulated_portfolio_returns).cumprod(
+        axis=0
+    )
+    simulation_paths = np.vstack([starting_values, simulated_values])
+
+    columns = [f"Simulation {number}" for number in range(1, num_simulations + 1)]
+
+    return pd.DataFrame(simulation_paths, columns=columns)
+
+
+def calculate_simulation_summary(
+    simulation_df: pd.DataFrame,
+    initial_value: float = 10000,
+    confidence_level: float = 0.95,
+) -> dict:
+    """Summarise final-value risk from simulated portfolio paths.
+
+    The final row represents the value at the simulation horizon. VaR and
+    Expected Shortfall are shown as positive currency losses from the starting
+    value, which makes downside risk easier to read in the dashboard.
+    """
+    if simulation_df.empty:
+        raise ValueError("simulation_df must not be empty")
+    if initial_value <= 0:
+        raise ValueError("initial_value must be greater than 0")
+    if confidence_level <= 0 or confidence_level >= 1:
+        raise ValueError("confidence_level must be between 0 and 1")
+
+    final_values = simulation_df.iloc[-1]
+    lower_percentile = (1 - confidence_level) * 100
+    upper_percentile = confidence_level * 100
+    percentile_5_final_value = float(np.percentile(final_values, lower_percentile))
+    percentile_95_final_value = float(np.percentile(final_values, upper_percentile))
+    worst_tail_values = final_values[final_values <= percentile_5_final_value]
+    worst_tail_losses = (initial_value - worst_tail_values).clip(lower=0)
+
+    if worst_tail_losses.empty:
+        expected_shortfall = 0.0
+    else:
+        expected_shortfall = float(worst_tail_losses.mean())
+
+    return {
+        "median_final_value": float(final_values.median()),
+        "percentile_5_final_value": percentile_5_final_value,
+        "percentile_95_final_value": percentile_95_final_value,
+        "probability_of_loss": float((final_values < initial_value).mean()),
+        "simulated_var": max(0.0, initial_value - percentile_5_final_value),
+        "expected_shortfall": expected_shortfall,
+    }
