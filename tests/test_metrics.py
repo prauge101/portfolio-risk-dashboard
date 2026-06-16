@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import pytest
 from pandas.testing import assert_frame_equal, assert_series_equal
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -51,6 +52,21 @@ def test_calculate_daily_returns_from_simple_prices():
     assert_frame_equal(result, expected)
 
 
+def test_calculate_daily_returns_from_hand_calculated_prices():
+    """Use 100 -> 110 -> 121 to prove two 10% daily returns by hand."""
+    price_data = pd.DataFrame(
+        {
+            "Date": pd.to_datetime(["2026-01-01", "2026-01-02", "2026-01-03"]),
+            "Ticker": ["ALPHA", "ALPHA", "ALPHA"],
+            "Close": [100.0, 110.0, 121.0],
+        }
+    )
+
+    result = calculate_daily_returns(price_data)
+
+    assert result["ALPHA"].tolist() == pytest.approx([0.10, 0.10])
+
+
 def test_calculate_cumulative_returns_from_simple_returns():
     """Compound daily returns into cumulative returns over time."""
     returns_data = pd.DataFrame(
@@ -74,6 +90,15 @@ def test_calculate_cumulative_returns_from_simple_returns():
     expected.index.name = "Date"
 
     assert_frame_equal(result, expected)
+
+
+def test_calculate_cumulative_returns_final_value_from_hand_calculated_returns():
+    """Compound two 10% returns to prove the final cumulative return is 21%."""
+    returns_data = pd.DataFrame({"ALPHA": [0.10, 0.10]})
+
+    result = calculate_cumulative_returns(returns_data)
+
+    assert result["ALPHA"].iloc[-1] == pytest.approx(0.21)
 
 
 def test_calculate_annualised_volatility_from_simple_returns():
@@ -111,6 +136,15 @@ def test_calculate_drawdown_from_simple_cumulative_returns():
     )
 
     assert_frame_equal(result, expected)
+
+
+def test_calculate_drawdown_from_hand_calculated_wealth_path():
+    """Use wealth 1.0 -> 1.1 -> 0.99 -> 1.188 to prove a 10% drawdown."""
+    cumulative_returns = pd.DataFrame({"ALPHA": [0.00, 0.10, -0.01, 0.188]})
+
+    result = calculate_drawdown(cumulative_returns)
+
+    assert result["ALPHA"].iloc[2] == pytest.approx(-0.10)
 
 
 def test_calculate_max_drawdown_from_simple_cumulative_returns():

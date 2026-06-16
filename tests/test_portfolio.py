@@ -63,6 +63,16 @@ def test_calculate_portfolio_returns_from_simple_weights():
     assert_series_equal(result, expected)
 
 
+def test_calculate_portfolio_return_from_hand_calculated_weighted_assets():
+    """Use 0.6 * 10% + 0.4 * -5% to prove a 4% portfolio return."""
+    returns_data = pd.DataFrame({"ALPHA": [0.10], "BETA": [-0.05]})
+    weights = {"ALPHA": 0.60, "BETA": 0.40}
+
+    result = calculate_portfolio_returns(returns_data, weights)
+
+    assert result.iloc[0] == pytest.approx(0.04)
+
+
 def test_calculate_portfolio_cumulative_returns_from_simple_returns():
     """Compound portfolio returns over time."""
     portfolio_returns = pd.Series(
@@ -80,3 +90,12 @@ def test_calculate_portfolio_cumulative_returns_from_simple_returns():
     )
 
     assert_series_equal(result, expected)
+
+
+def test_calculate_portfolio_cumulative_return_from_hand_calculated_returns():
+    """Compound two 4% returns to prove the final cumulative return is 8.16%."""
+    portfolio_returns = pd.Series([0.04, 0.04], name="Portfolio")
+
+    result = calculate_portfolio_cumulative_returns(portfolio_returns)
+
+    assert result.iloc[-1] == pytest.approx(0.0816)
