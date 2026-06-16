@@ -1,24 +1,5 @@
 # Project Brief
 
-## Why This Project Exists
-
-This project is a beginner-friendly Portfolio Risk Dashboard built with Python and Streamlit. It is designed to show practical finance, data analysis, and risk analytics skills in a clear project that can be discussed on a CV or in interviews.
-
-The dashboard will analyse stock price data from CSV files and explain common portfolio risk concepts step by step.
-
-## Target Finance Roles
-
-This project supports applications for roles in:
-
-- Finance analytics
-- Risk analytics
-- Fintech
-- Consulting
-- Investment operations
-- Quantitative or data-focused internships
-
-It is especially aimed at a Mechanical Engineering student transitioning into finance, fintech, risk analytics, and consulting.
-
 ## Planned Dashboard Features
 
 - Load stock price data from CSV files
