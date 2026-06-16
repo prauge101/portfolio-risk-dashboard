@@ -2,6 +2,20 @@
 
 A Python and Streamlit dashboard for analysing portfolio risk using historical market data, return calculations, volatility, drawdowns, correlation, historical Value at Risk, stress testing and Monte Carlo simulation.
 
+## Dashboard Preview
+
+**Dashboard overview**
+![Dashboard overview](assets/dashboard-overview.png)
+
+**Asset risk tab**
+![Asset risk tab](assets/asset-risk-tab.png)
+
+**Portfolio analysis tab**
+![Portfolio analysis tab](assets/portfolio-analysis-tab.png)
+
+**Correlated Monte Carlo simulation**
+![Correlated Monte Carlo simulation](assets/correlated-monte-carlo.png)
+
 ## Why I Built This
 
 I built this project as a Mechanical Engineering student applying engineering-style modelling, stress testing and quantitative analysis to financial markets and risk analytics.
