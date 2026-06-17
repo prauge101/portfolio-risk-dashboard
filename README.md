@@ -71,11 +71,22 @@ The calculation logic is kept separate from the Streamlit app so the finance fun
 
 ## Run Locally
 
+Windows PowerShell:
+
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 .\.venv\Scripts\streamlit.exe run app.py
+```
+
+macOS/Linux:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+streamlit run app.py
 ```
 
 Then open the local Streamlit URL shown in the terminal.
@@ -100,8 +111,16 @@ Date,Ticker,Close
 
 Run the test suite with:
 
+Windows PowerShell:
+
 ```powershell
 .\.venv\Scripts\pytest.exe tests
+```
+
+macOS/Linux:
+
+```bash
+pytest tests
 ```
 
 The tests include hand-calculated examples for the main finance calculations.

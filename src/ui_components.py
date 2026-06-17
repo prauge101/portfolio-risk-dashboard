@@ -579,6 +579,31 @@ def kpi_card(label: str, value: str, detail: str = "", tone: str = "blue") -> No
     )
 
 
+def metric_card_html(label: str, value: str, detail: str = "", tone: str = "blue") -> str:
+    """Build metric card HTML for responsive metric grids."""
+    return (
+        f'<div class="metric-card metric-card-{escape(tone)}" '
+        'style="box-sizing: border-box; display: block; max-width: 100%; '
+        'overflow: hidden; width: 100%;">'
+        f'<div class="metric-label">{escape(label)}</div>'
+        f'<div class="metric-value">{escape(value)}</div>'
+        f'<div class="metric-detail">{escape(detail)}</div>'
+        "</div>"
+    )
+
+
+def metric_card_grid(cards: list[tuple[str, str, str, str]]) -> None:
+    """Render metric cards in a responsive grid that stays inside containers."""
+    card_html = "".join(
+        metric_card_html(label, value, detail, tone)
+        for label, value, detail, tone in cards
+    )
+    st.markdown(
+        f'<div class="metric-card-grid">{card_html}</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def section_header(title: str, subtitle: str = "") -> None:
     """Render a section title and optional explanatory line."""
     subtitle_html = f"<p>{escape(subtitle)}</p>" if subtitle else ""
@@ -651,6 +676,23 @@ def data_table(data, max_rows: int | None = None, show_index: bool = False) -> N
     )
     st.markdown(
         f'<div class="table-wrap">{html_table}</div>',
+        unsafe_allow_html=True,
+    )
+
+
+def styled_table(data, max_rows: int | None = None) -> None:
+    """Render a compact table that matches the dashboard theme."""
+    table_data = data.copy()
+    if max_rows is not None:
+        table_data = table_data.head(max_rows)
+
+    html_table = table_data.to_html(
+        classes="styled-table",
+        border=0,
+        escape=True,
+    )
+    st.markdown(
+        f'<div class="styled-table-wrap">{html_table}</div>',
         unsafe_allow_html=True,
     )
 

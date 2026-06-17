@@ -1,7 +1,5 @@
 """Streamlit user interface for the Portfolio Risk Dashboard."""
 
-from html import escape
-
 import streamlit as st
 
 from src.charts import (
@@ -70,72 +68,6 @@ def format_date(value) -> str:
     return value.strftime("%d %b %Y")
 
 
-def metric_card_html(label: str, value: str, detail: str = "", tone: str = "blue") -> str:
-    """Build metric card HTML so rows can be rendered in a contained CSS grid."""
-    return (
-        f'<div class="metric-card metric-card-{escape(tone)}" '
-        'style="box-sizing: border-box; display: block; max-width: 100%; '
-        'overflow: hidden; width: 100%;">'
-        f'<div class="metric-label">{escape(label)}</div>'
-        f'<div class="metric-value">{escape(value)}</div>'
-        f'<div class="metric-detail">{escape(detail)}</div>'
-        "</div>"
-    )
-
-
-def metric_card_grid(cards: list[tuple[str, str, str, str]]) -> None:
-    """Render metric cards in a responsive grid that stays inside containers."""
-    card_html = "".join(
-        metric_card_html(label, value, detail, tone)
-        for label, value, detail, tone in cards
-    )
-    st.markdown(
-        f'<div class="metric-card-grid">{card_html}</div>',
-        unsafe_allow_html=True,
-    )
-
-
-def ticker_chip_row(price_data, max_tickers: int = 8) -> None:
-    """Render a compact row of latest ticker prices for dashboard context."""
-    latest_prices = (
-        price_data.sort_values("Date")
-        .groupby("Ticker", as_index=False)
-        .tail(1)
-        .sort_values("Ticker")
-        .head(max_tickers)
-    )
-    chips = []
-    for _, row in latest_prices.iterrows():
-        chips.append(
-            '<div class="ticker-chip">'
-            f'<span class="ticker-symbol">{escape(str(row["Ticker"]))}</span>'
-            f'<span class="ticker-price">Close {row["Close"]:,.2f}</span>'
-            "</div>"
-        )
-
-    st.markdown(
-        f'<div class="ticker-strip">{"".join(chips)}</div>',
-        unsafe_allow_html=True,
-    )
-
-
-def styled_table(data, max_rows: int | None = None) -> None:
-    """Render a compact table that matches the dashboard theme."""
-    table_data = data.copy()
-    if max_rows is not None:
-        table_data = table_data.head(max_rows)
-
-    html_table = table_data.to_html(
-        classes="styled-table",
-        border=0,
-        escape=True,
-    )
-    st.markdown(
-        f'<div class="styled-table-wrap">{html_table}</div>',
-        unsafe_allow_html=True,
-    )
-
-
 @st.cache_data(ttl=3600, show_spinner=False)
 def cached_fetch_yfinance_price_data(
     tickers: tuple[str, ...],
@@ -144,7 +76,6 @@ def cached_fetch_yfinance_price_data(
 ):
     """Fetch yfinance data through Streamlit's cache to reduce repeat calls."""
     return fetch_yfinance_price_data(list(tickers), period=period, interval=interval)
-
 
 
 ui.inject_global_styles()
@@ -321,10 +252,10 @@ show_monte_carlo = st.sidebar.checkbox(
 if not show_monte_carlo:
     st.sidebar.caption("Monte Carlo simulation is disabled.")
 
-ticker_chip_row(price_data)
+ui.ticker_strip(price_data)
 
 st.subheader("Dataset Overview")
-metric_card_grid(
+ui.metric_card_grid(
     [
         ("Tickers", str(len(tickers)), "Assets detected", "blue"),
         ("Price Rows", f"{len(price_data):,}", "Raw observations", "slate"),
@@ -337,7 +268,7 @@ metric_card_grid(
 with st.expander("Raw price data preview", expanded=False):
     preview_data = price_data.head(20).copy()
     preview_data["Date"] = preview_data["Date"].dt.strftime("%Y-%m-%d")
-    styled_table(preview_data)
+    ui.styled_table(preview_data)
 
 asset_tab, portfolio_tab = st.tabs(["Asset Risk", "Portfolio Analysis"])
 
@@ -363,7 +294,7 @@ with asset_tab:
             )
             annualised_volatility = calculate_annualised_volatility(daily_returns)
             volatility_table = annualised_volatility.rename_axis("Ticker").rename("Value")
-            styled_table(volatility_table.map(format_percent).to_frame())
+            ui.styled_table(volatility_table.map(format_percent).to_frame())
 
     with right_col:
         with st.container(border=True):
@@ -375,7 +306,7 @@ with asset_tab:
             )
             max_drawdown = calculate_max_drawdown(cumulative_returns)
             drawdown_table = max_drawdown.rename_axis("Ticker").rename("Value")
-            styled_table(drawdown_table.map(format_percent).to_frame())
+            ui.styled_table(drawdown_table.map(format_percent).to_frame())
 
     drawdowns = calculate_drawdown(cumulative_returns)
 
@@ -423,7 +354,7 @@ with portfolio_tab:
         ).iloc[0]
         final_cumulative_return = portfolio_cumulative_returns.iloc[-1]
 
-        metric_card_grid(
+        ui.metric_card_grid(
             [
                 (
                     "Cumulative Return",
@@ -514,7 +445,7 @@ with portfolio_tab:
             except ValueError as error:
                 st.error(str(error))
             else:
-                metric_card_grid(
+                ui.metric_card_grid(
                     [
                         (
                         "Portfolio impact",
@@ -636,7 +567,7 @@ with portfolio_tab:
                 except ValueError as error:
                     st.error(str(error))
                 else:
-                    metric_card_grid(
+                    ui.metric_card_grid(
                         [
                             (
                                 "Median final value",
@@ -659,7 +590,7 @@ with portfolio_tab:
                         ]
                     )
 
-                    metric_card_grid(
+                    ui.metric_card_grid(
                         [
                             (
                                 "Probability of loss",
