@@ -72,7 +72,7 @@ def _style_legend(legend):
 
 
 def _style_colorbar(colorbar):
-    """Style a matplotlib colorbar so it remains readable on dark charts."""
+    """Style a matplotlib colorbar so it remains readable on light charts."""
     colorbar.outline.set_edgecolor(SPINE_COLOR)
     colorbar.ax.set_facecolor(CHART_BACKGROUND)
     colorbar.ax.tick_params(colors=MUTED_TEXT_COLOR, labelsize=9)
@@ -83,7 +83,7 @@ def _style_colorbar(colorbar):
         label.set_color(MUTED_TEXT_COLOR)
 
 
-def _create_dark_figure(width: float = 9, height: float = 4.6):
+def _create_light_figure(width: float = 9, height: float = 4.6):
     """Create a matplotlib figure and axis using the dashboard light surface."""
     figure, axis = plt.subplots(figsize=(width, height))
     figure.patch.set_facecolor(CHART_BACKGROUND)
@@ -93,7 +93,7 @@ def _create_dark_figure(width: float = 9, height: float = 4.6):
     return figure, axis
 
 
-def _finish_dark_figure(figure, axis):
+def _finish_light_figure(figure, axis):
     """Keep all visible matplotlib text readable on the light dashboard theme."""
     _apply_clean_axis_style(axis)
     figure.tight_layout()
@@ -105,7 +105,7 @@ def plot_cumulative_returns(cumulative_returns_df):
     Cumulative returns show how much each asset or portfolio has gained or lost
     since the start of the selected period.
     """
-    figure, axis = _create_dark_figure()
+    figure, axis = _create_light_figure()
     cumulative_returns_df.plot(ax=axis, linewidth=2.1, color=CHART_COLORS)
     axis.axhline(0, color="#64748b", linewidth=0.8)
     axis.set_title("Compounded Return Since Start")
@@ -113,7 +113,7 @@ def plot_cumulative_returns(cumulative_returns_df):
     axis.set_ylabel("Total return")
     axis.yaxis.set_major_formatter(PercentFormatter(xmax=1.0))
     _style_legend(axis.legend(title="Series", frameon=False))
-    _finish_dark_figure(figure, axis)
+    _finish_light_figure(figure, axis)
 
     return figure
 
@@ -124,7 +124,7 @@ def plot_drawdowns(drawdown_df):
     Drawdown charts help investors see when an asset or portfolio was below its
     previous highest value and how deep the decline became.
     """
-    figure, axis = _create_dark_figure()
+    figure, axis = _create_light_figure()
     drawdown_df.plot(ax=axis, linewidth=2.0, color=CHART_COLORS)
     axis.axhline(0, color="#64748b", linewidth=0.8)
     axis.set_title("Drawdown From Previous Peak")
@@ -132,7 +132,7 @@ def plot_drawdowns(drawdown_df):
     axis.set_ylabel("Fall from peak")
     axis.yaxis.set_major_formatter(PercentFormatter(xmax=1.0))
     _style_legend(axis.legend(title="Series", frameon=False))
-    _finish_dark_figure(figure, axis)
+    _finish_light_figure(figure, axis)
 
     return figure
 
@@ -145,7 +145,7 @@ def plot_correlation_matrix(returns_df):
     """
     correlation_matrix = returns_df.corr()
 
-    figure, axis = _create_dark_figure(width=6.7, height=5.6)
+    figure, axis = _create_light_figure(width=6.7, height=5.6)
     image = axis.imshow(correlation_matrix, cmap="coolwarm", vmin=-1, vmax=1)
     axis.set_title("Asset Return Correlations")
     axis.set_xticks(range(len(correlation_matrix.columns)))
@@ -171,7 +171,7 @@ def plot_correlation_matrix(returns_df):
     colorbar = figure.colorbar(image, ax=axis)
     colorbar.set_label("Correlation")
     _style_colorbar(colorbar)
-    _finish_dark_figure(figure, axis)
+    _finish_light_figure(figure, axis)
 
     return figure
 
@@ -183,7 +183,7 @@ def plot_monte_carlo_paths(simulation_df):
     median scenario, and the shaded band shows the 5th to 95th percentile range.
     The chart should be read as uncertainty analysis, not a forecast.
     """
-    figure, axis = _create_dark_figure()
+    figure, axis = _create_light_figure()
     paths_to_plot = simulation_df.iloc[:, :10]
     trading_days = simulation_df.index
     percentile_5 = simulation_df.quantile(0.05, axis=1)
@@ -228,6 +228,6 @@ def plot_monte_carlo_paths(simulation_df):
             frameon=False,
         )
     )
-    _finish_dark_figure(figure, axis)
+    _finish_light_figure(figure, axis)
 
     return figure

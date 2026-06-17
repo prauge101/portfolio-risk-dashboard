@@ -470,7 +470,7 @@ def inject_global_styles() -> None:
             background: #eef6ff;
         }
 
-        .dark-table-wrap {
+        .styled-table-wrap {
             background: #ffffff !important;
             border: 1px solid var(--border) !important;
             border-radius: 14px !important;
@@ -480,14 +480,14 @@ def inject_global_styles() -> None:
             overflow: auto;
         }
 
-        table.dark-table {
+        table.styled-table {
             border-collapse: collapse;
             color: var(--text) !important;
             font-size: 0.86rem;
             width: 100%;
         }
 
-        table.dark-table thead th {
+        table.styled-table thead th {
             background: #f1f5f9 !important;
             border-bottom: 1px solid var(--border-strong) !important;
             border-right: 0 !important;
@@ -499,8 +499,8 @@ def inject_global_styles() -> None:
             text-transform: uppercase;
         }
 
-        table.dark-table tbody th,
-        table.dark-table tbody td {
+        table.styled-table tbody th,
+        table.styled-table tbody td {
             background: transparent !important;
             border-bottom: 1px solid #e5eaf2 !important;
             border-right: 0 !important;
@@ -509,15 +509,15 @@ def inject_global_styles() -> None:
             text-align: left;
         }
 
-        table.dark-table tbody tr:nth-child(even) {
+        table.styled-table tbody tr:nth-child(even) {
             background: #f8fafc !important;
         }
 
-        table.dark-table tbody tr:nth-child(odd) {
+        table.styled-table tbody tr:nth-child(odd) {
             background: #ffffff !important;
         }
 
-        table.dark-table tbody tr:hover {
+        table.styled-table tbody tr:hover {
             background: #eef6ff !important;
         }
 
