@@ -448,22 +448,22 @@ with portfolio_tab:
                 ui.metric_card_grid(
                     [
                         (
-                        "Portfolio impact",
-                        format_percent(stress_result["portfolio_impact_percent"]),
-                        "Weighted shock effect",
-                        "red",
+                            "Portfolio impact",
+                            format_percent(stress_result["portfolio_impact_percent"]),
+                            "Weighted shock effect",
+                            "red",
                         ),
                         (
-                        "Estimated value impact",
-                        f"£{stress_result['portfolio_impact_value']:,.2f}",
-                        "Change in portfolio value",
-                        "amber",
+                            "Estimated value impact",
+                            f"\u00a3{stress_result['portfolio_impact_value']:,.2f}",
+                            "Change in portfolio value",
+                            "amber",
                         ),
                         (
-                        "Stressed portfolio value",
-                        f"£{stress_result['stressed_portfolio_value']:,.2f}",
-                        "Value after scenario shock",
-                        "blue",
+                            "Stressed portfolio value",
+                            f"\u00a3{stress_result['stressed_portfolio_value']:,.2f}",
+                            "Value after scenario shock",
+                            "blue",
                         ),
                     ]
                 )
@@ -577,13 +577,13 @@ with portfolio_tab:
                             ),
                             (
                                 "5th percentile final value",
-                                f"${simulation_summary['percentile_5_final_value']:,.2f}",
+                                f"${simulation_summary['lower_percentile_final_value']:,.2f}",
                                 "Downside final-value threshold",
                                 "red",
                             ),
                             (
                                 "95th percentile final value",
-                                f"${simulation_summary['percentile_95_final_value']:,.2f}",
+                                f"${simulation_summary['upper_percentile_final_value']:,.2f}",
                                 "Upside final-value threshold",
                                 "green",
                             ),
@@ -603,7 +603,7 @@ with portfolio_tab:
                             (
                                 "Simulated VaR",
                                 f"${simulation_summary['simulated_var']:,.2f}",
-                                "Loss at the 5th percentile final value",
+                                "Loss at the lower-tail final value",
                                 "red",
                             ),
                             (

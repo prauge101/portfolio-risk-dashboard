@@ -267,6 +267,23 @@ def test_run_correlated_monte_carlo_simulation_raises_for_missing_weight_ticker(
         run_correlated_monte_carlo_simulation(returns_df, weights)
 
 
+def test_run_correlated_monte_carlo_simulation_raises_for_empty_weights():
+    """Raise a clear error when no portfolio weights are supplied."""
+    returns_df = make_two_asset_returns()
+
+    with pytest.raises(ValueError, match="weights must not be empty"):
+        run_correlated_monte_carlo_simulation(returns_df, {})
+
+
+def test_run_correlated_monte_carlo_simulation_raises_for_bad_weight_total():
+    """Raise a clear error when correlated simulation weights do not sum to 1."""
+    returns_df = make_two_asset_returns()
+    weights = {"ALPHA": 0.60, "BETA": 0.30}
+
+    with pytest.raises(ValueError, match="Portfolio weights must sum to 1"):
+        run_correlated_monte_carlo_simulation(returns_df, weights)
+
+
 def test_run_correlated_monte_carlo_simulation_raises_for_bad_simulation_count():
     """Raise a clear error when correlated simulation count is invalid."""
     returns_df = make_two_asset_returns()
@@ -312,8 +329,8 @@ def test_calculate_simulation_summary_returns_expected_keys():
 
     assert set(result) == {
         "median_final_value",
-        "percentile_5_final_value",
-        "percentile_95_final_value",
+        "lower_percentile_final_value",
+        "upper_percentile_final_value",
         "probability_of_loss",
         "simulated_var",
         "expected_shortfall",

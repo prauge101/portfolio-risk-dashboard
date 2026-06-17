@@ -112,8 +112,8 @@ def test_plot_monte_carlo_paths_limits_background_lines_to_10():
     plt.close(figure)
 
 
-def test_chart_axis_text_uses_dark_theme_colours():
-    """Keep chart titles, axis labels, and tick labels readable in dark mode."""
+def test_chart_axis_text_uses_light_theme_colours():
+    """Keep chart titles, axis labels, and tick labels readable in light mode."""
     cumulative_returns = pd.DataFrame(
         {"ALPHA": [0.00, 0.10], "BETA": [0.00, -0.05]},
         index=pd.to_datetime(["2026-01-01", "2026-01-02"]),

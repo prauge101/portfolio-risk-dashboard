@@ -124,6 +124,8 @@ def run_correlated_monte_carlo_simulation(
         raise ValueError("num_days must be greater than 0")
     if initial_value <= 0:
         raise ValueError("initial_value must be greater than 0")
+    if not weights:
+        raise ValueError("weights must not be empty")
 
     missing_tickers = [ticker for ticker in weights if ticker not in returns_df.columns]
     if missing_tickers:
@@ -131,6 +133,10 @@ def run_correlated_monte_carlo_simulation(
         raise ValueError(f"Missing return data for ticker(s): {missing}")
 
     tickers = list(weights.keys())
+    total_weight = sum(weights[ticker] for ticker in tickers)
+    if abs(total_weight - 1.0) > 0.000001:
+        raise ValueError(f"Portfolio weights must sum to 1. Current sum: {total_weight}")
+
     selected_returns = returns_df[tickers]
     mean_returns = selected_returns.mean().to_numpy()
     covariance_matrix = selected_returns.cov().to_numpy()
@@ -177,9 +183,9 @@ def calculate_simulation_summary(
     final_values = simulation_df.iloc[-1]
     lower_percentile = (1 - confidence_level) * 100
     upper_percentile = confidence_level * 100
-    percentile_5_final_value = float(np.percentile(final_values, lower_percentile))
-    percentile_95_final_value = float(np.percentile(final_values, upper_percentile))
-    worst_tail_values = final_values[final_values <= percentile_5_final_value]
+    lower_percentile_final_value = float(np.percentile(final_values, lower_percentile))
+    upper_percentile_final_value = float(np.percentile(final_values, upper_percentile))
+    worst_tail_values = final_values[final_values <= lower_percentile_final_value]
     worst_tail_losses = (initial_value - worst_tail_values).clip(lower=0)
 
     if worst_tail_losses.empty:
@@ -189,9 +195,9 @@ def calculate_simulation_summary(
 
     return {
         "median_final_value": float(final_values.median()),
-        "percentile_5_final_value": percentile_5_final_value,
-        "percentile_95_final_value": percentile_95_final_value,
+        "lower_percentile_final_value": lower_percentile_final_value,
+        "upper_percentile_final_value": upper_percentile_final_value,
         "probability_of_loss": float((final_values < initial_value).mean()),
-        "simulated_var": max(0.0, initial_value - percentile_5_final_value),
+        "simulated_var": max(0.0, initial_value - lower_percentile_final_value),
         "expected_shortfall": expected_shortfall,
     }
