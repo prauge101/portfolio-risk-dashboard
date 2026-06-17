@@ -64,7 +64,10 @@ def test_calculate_daily_returns_from_hand_calculated_prices():
 
     result = calculate_daily_returns(price_data)
 
-    assert result["ALPHA"].tolist() == pytest.approx([0.10, 0.10])
+    # 110 / 100 - 1 = 0.10, then 121 / 110 - 1 = 0.10.
+    expected_daily_returns = [0.10, 0.10]
+
+    assert result["ALPHA"].tolist() == pytest.approx(expected_daily_returns)
 
 
 def test_calculate_cumulative_returns_from_simple_returns():
@@ -94,11 +97,16 @@ def test_calculate_cumulative_returns_from_simple_returns():
 
 def test_calculate_cumulative_returns_final_value_from_hand_calculated_returns():
     """Compound two 10% returns to prove the final cumulative return is 21%."""
-    returns_data = pd.DataFrame({"ALPHA": [0.10, 0.10]})
+    daily_returns = pd.DataFrame({"ALPHA": [0.10, 0.10]})
 
-    result = calculate_cumulative_returns(returns_data)
+    result = calculate_cumulative_returns(daily_returns)
 
-    assert result["ALPHA"].iloc[-1] == pytest.approx(0.21)
+    # (1.10 * 1.10) - 1 = 0.21.
+    expected_final_cumulative_return = 0.21
+
+    assert result["ALPHA"].iloc[-1] == pytest.approx(
+        expected_final_cumulative_return
+    )
 
 
 def test_calculate_annualised_volatility_from_simple_returns():
@@ -144,7 +152,10 @@ def test_calculate_drawdown_from_hand_calculated_wealth_path():
 
     result = calculate_drawdown(cumulative_returns)
 
-    assert result["ALPHA"].iloc[2] == pytest.approx(-0.10)
+    # The running peak is 1.10, so 0.99 / 1.10 - 1 = -0.10.
+    expected_drawdown_at_trough = -0.10
+
+    assert result["ALPHA"].iloc[2] == pytest.approx(expected_drawdown_at_trough)
 
 
 def test_calculate_max_drawdown_from_simple_cumulative_returns():

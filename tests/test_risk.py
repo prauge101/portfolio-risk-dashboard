@@ -19,6 +19,16 @@ from src.risk import (
 )
 
 
+def make_two_asset_returns() -> pd.DataFrame:
+    """Create a tiny deterministic return history for simulation tests."""
+    return pd.DataFrame(
+        {
+            "ALPHA": [0.01, -0.02, 0.03, 0.00],
+            "BETA": [0.00, 0.01, -0.01, 0.02],
+        }
+    )
+
+
 def test_calculate_historical_var_uses_lower_tail_percentile():
     """Calculate 95% historical VaR from simple known portfolio returns."""
     portfolio_returns = pd.Series([-0.10, -0.05, 0.00, 0.05, 0.10])
@@ -34,7 +44,10 @@ def test_calculate_historical_var_returns_positive_hand_calculated_loss():
 
     result = calculate_historical_var(portfolio_returns, confidence_level=0.95)
 
-    assert result == pytest.approx(0.18)
+    # NumPy's 5th percentile is -0.18, and VaR is reported as a positive loss.
+    expected_var_loss = 0.18
+
+    assert result == pytest.approx(expected_var_loss)
 
 
 def test_calculate_historical_var_accepts_different_confidence_level():
@@ -82,9 +95,16 @@ def test_calculate_stress_test_loss_from_hand_calculated_shocks():
 
     result = calculate_stress_test_loss(weights, shocks, portfolio_value=10000)
 
-    assert result["portfolio_impact_percent"] == pytest.approx(-0.08)
-    assert result["portfolio_impact_value"] == pytest.approx(-800.0)
-    assert result["stressed_portfolio_value"] == pytest.approx(9200.0)
+    # 0.60 * -0.10 + 0.40 * -0.05 = -0.08.
+    expected_impact_percent = -0.08
+    expected_value_impact = -800.0
+    expected_stressed_value = 9200.0
+
+    assert result["portfolio_impact_percent"] == pytest.approx(
+        expected_impact_percent
+    )
+    assert result["portfolio_impact_value"] == pytest.approx(expected_value_impact)
+    assert result["stressed_portfolio_value"] == pytest.approx(expected_stressed_value)
 
 
 def test_calculate_stress_test_loss_raises_value_error_for_missing_shock():
@@ -185,12 +205,7 @@ def test_run_monte_carlo_simulation_raises_value_error_for_bad_initial_value():
 
 def test_run_correlated_monte_carlo_simulation_returns_expected_shape():
     """Return one simulated path per column and include the starting row."""
-    returns_df = pd.DataFrame(
-        {
-            "ALPHA": [0.01, -0.02, 0.03, 0.00],
-            "BETA": [0.00, 0.01, -0.01, 0.02],
-        }
-    )
+    returns_df = make_two_asset_returns()
     weights = {"ALPHA": 0.60, "BETA": 0.40}
 
     result = run_correlated_monte_carlo_simulation(
@@ -206,12 +221,7 @@ def test_run_correlated_monte_carlo_simulation_returns_expected_shape():
 
 def test_run_correlated_monte_carlo_simulation_first_row_equals_initial_value():
     """Start every correlated simulation at the same portfolio value."""
-    returns_df = pd.DataFrame(
-        {
-            "ALPHA": [0.01, -0.02, 0.03, 0.00],
-            "BETA": [0.00, 0.01, -0.01, 0.02],
-        }
-    )
+    returns_df = make_two_asset_returns()
     weights = {"ALPHA": 0.60, "BETA": 0.40}
 
     result = run_correlated_monte_carlo_simulation(
@@ -227,12 +237,7 @@ def test_run_correlated_monte_carlo_simulation_first_row_equals_initial_value():
 
 def test_run_correlated_monte_carlo_simulation_same_seed_gives_same_result():
     """Use the random seed to make correlated simulations reproducible."""
-    returns_df = pd.DataFrame(
-        {
-            "ALPHA": [0.01, -0.02, 0.03, 0.00],
-            "BETA": [0.00, 0.01, -0.01, 0.02],
-        }
-    )
+    returns_df = make_two_asset_returns()
     weights = {"ALPHA": 0.60, "BETA": 0.40}
 
     first_result = run_correlated_monte_carlo_simulation(
@@ -264,12 +269,7 @@ def test_run_correlated_monte_carlo_simulation_raises_for_missing_weight_ticker(
 
 def test_run_correlated_monte_carlo_simulation_raises_for_bad_simulation_count():
     """Raise a clear error when correlated simulation count is invalid."""
-    returns_df = pd.DataFrame(
-        {
-            "ALPHA": [0.01, -0.02, 0.03, 0.00],
-            "BETA": [0.00, 0.01, -0.01, 0.02],
-        }
-    )
+    returns_df = make_two_asset_returns()
     weights = {"ALPHA": 0.60, "BETA": 0.40}
 
     with pytest.raises(ValueError, match="num_simulations must be greater than 0"):
@@ -282,12 +282,7 @@ def test_run_correlated_monte_carlo_simulation_raises_for_bad_simulation_count()
 
 def test_run_correlated_monte_carlo_simulation_raises_for_bad_day_count():
     """Raise a clear error when correlated simulation horizon is invalid."""
-    returns_df = pd.DataFrame(
-        {
-            "ALPHA": [0.01, -0.02, 0.03, 0.00],
-            "BETA": [0.00, 0.01, -0.01, 0.02],
-        }
-    )
+    returns_df = make_two_asset_returns()
     weights = {"ALPHA": 0.60, "BETA": 0.40}
 
     with pytest.raises(ValueError, match="num_days must be greater than 0"):
@@ -296,12 +291,7 @@ def test_run_correlated_monte_carlo_simulation_raises_for_bad_day_count():
 
 def test_run_correlated_monte_carlo_simulation_raises_for_bad_initial_value():
     """Raise a clear error when correlated simulation starting value is invalid."""
-    returns_df = pd.DataFrame(
-        {
-            "ALPHA": [0.01, -0.02, 0.03, 0.00],
-            "BETA": [0.00, 0.01, -0.01, 0.02],
-        }
-    )
+    returns_df = make_two_asset_returns()
     weights = {"ALPHA": 0.60, "BETA": 0.40}
 
     with pytest.raises(ValueError, match="initial_value must be greater than 0"):
@@ -358,8 +348,11 @@ def test_calculate_simulation_summary_returns_non_negative_risk_losses():
 
     result = calculate_simulation_summary(simulation_df, initial_value=1000)
 
-    assert result["simulated_var"] >= 0
-    assert result["expected_shortfall"] >= 0
+    simulated_var = result["simulated_var"]
+    expected_shortfall = result["expected_shortfall"]
+
+    assert simulated_var >= 0
+    assert expected_shortfall >= 0
 
 
 def test_calculate_simulation_summary_from_hand_calculated_final_values():
@@ -380,6 +373,18 @@ def test_calculate_simulation_summary_from_hand_calculated_final_values():
         confidence_level=0.80,
     )
 
-    assert result["probability_of_loss"] == pytest.approx(0.40)
-    assert result["simulated_var"] == pytest.approx(120.0)
-    assert result["expected_shortfall"] == pytest.approx(200.0)
+    # Final values are 1100, 900, 1030, 800, 1000.
+    # Two of five simulations finish below 1000, so probability of loss is 40%.
+    expected_probability_of_loss = 0.40
+
+    # At 80% confidence, the lower 20th percentile is 880, so VaR is 120.
+    expected_simulated_var = 120.0
+
+    # Only the worst-tail final value, 800, is averaged, so ES is 200.
+    expected_shortfall = 200.0
+
+    assert result["probability_of_loss"] == pytest.approx(
+        expected_probability_of_loss
+    )
+    assert result["simulated_var"] == pytest.approx(expected_simulated_var)
+    assert result["expected_shortfall"] == pytest.approx(expected_shortfall)
